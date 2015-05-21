@@ -1,89 +1,62 @@
-(function (window,document,undefined) {
-
-	var coin,
-		coinImage,
-		canvas;					
+function SpriteAnim(canvasId,sprite) {
+	var that = this;
+	this.canvas = document.getElementById(canvasId);
+	this.canvas.width = 100;
+	this.canvas.height = 100;
 	
-	function spriteAnim(canvasId) {
-		this.canvas = getElementById(canvasId)
+	this.frameIndex = 0;
+	this.tickCount = 0;
+	this.ticksPerFrame = sprite.ticksPerFrame || 0;
+	this.numberOfFrames = sprite.numberOfFrames || 1;
+	this.loopSprite = sprite.loop || false;
+	this.playSprite = true;
+
+	this.context = this.canvas.getContext("2d");
+	this.width = sprite.width;
+	this.height = sprite.height;
+	this.image = sprite.image;
+
+	this.update = function () {
+		this.draw();
+
+	    this.tickCount += 1;
+	    if (this.tickCount > this.ticksPerFrame) {
+
+			this.tickCount = 0;
+
+			
+	        if (this.frameIndex < this.numberOfFrames - 1) {	
+	            this.frameIndex += 1;
+	        } else {
+	            if(this.loopSprite) {
+	            	this.frameIndex = 0;
+	            } else {
+	            	this.playSprite = false;
+	            }
+	        }
+	    }
+	    
+	};
+	this.draw = function() {
+		this.context.clearRect(0, 0, this.width, this.height);
+
+		this.context.drawImage(
+		this.image,
+		this.frameIndex * this.width / this.numberOfFrames,
+		0,
+		this.width / this.numberOfFrames,
+		this.height,
+		0,
+		0,
+		this.width / this.numberOfFrames,
+		this.height);
 	}
 
-	
-	function sprite (options) {
-	
-		var that = {},
-			frameIndex = 0,
-			tickCount = 0,
-			ticksPerFrame = options.ticksPerFrame || 0,
-			numberOfFrames = options.numberOfFrames || 1;
-		
-		that.context = options.context;
-		that.width = options.width;
-		that.height = options.height;
-		that.image = options.image;
-		
-		that.update = function () {
-
-            tickCount += 1;
-
-            if (tickCount > ticksPerFrame) {
-
-				tickCount = 0;
-				
-                if (frameIndex < numberOfFrames - 1) {	
-                    frameIndex += 1;
-                } else {
-                    frameIndex = 0;
-                }
-            }
-        };
-		
-		that.render = function () {
-		
-		  // Clear the canvas
-		  that.context.clearRect(0, 0, that.width, that.height);
-		  
-		  // Draw the animation
-		  that.context.drawImage(
-		    that.image,
-		    frameIndex * that.width / numberOfFrames,
-		    0,
-		    that.width / numberOfFrames,
-		    that.height,
-		    0,
-		    0,
-		    that.width / numberOfFrames,
-		    that.height);
-		};
-		
-		return that;
+	this.ticker = function() {
+		if(this.playSprite) {
+			window.requestAnimationFrame(this.ticker.bind(this));
+		}
+		this.update();
 	}
-	
-	canvas = document.getElementById("coinAnimation");
-	canvas.width = 100;
-	canvas.height = 100;
-	
-	coinImage = new Image();	
-	
-	coin = sprite({
-		context: canvas.getContext("2d"),
-		width: 1000,
-		height: 100,
-		image: coinImage,
-		numberOfFrames: 10,
-		ticksPerFrame: 4
-	});
-
-	function gameLoop () {
-	
-	  window.requestAnimationFrame(gameLoop);
-
-	  coin.update();
-	  coin.render();
-	}
-	
-	coinImage.addEventListener("load", gameLoop);
-	coinImage.src = "images/coin-sprite-animation.png";
-
-}(window,document,undefined));
-
+	this.ticker();
+}

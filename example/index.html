@@ -5,6 +5,22 @@
 </head>
 <body>
 	<canvas id="coinAnimation"></canvas>
+	<script type="text/javascript" src="https://code.createjs.com/preloadjs-0.6.0.min.js"></script>
 	<script type="text/javascript" src="../dist/spriteanim-1.0.js"></script>
+	<script type="text/javascript">
+
+		coinImage = new Image();	
+		coinImage.src = "images/coin-sprite-animation.png";
+
+		coin = new SpriteAnim("coinAnimation",{
+			width: 1000,
+			height: 100,
+			image: coinImage,
+			numberOfFrames: 10,
+			ticksPerFrame: 2,
+			loop: true
+		});
+
+	</script>
 </body>
 </html>
