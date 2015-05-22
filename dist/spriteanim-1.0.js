@@ -1,17 +1,25 @@
 function SpriteAnim(canvasId,sprite) {
-	var that = this;
+	// Canvas
 	this.canvas = document.getElementById(canvasId);
+	this.context = this.canvas.getContext("2d");
 	this.canvas.width = 100;
 	this.canvas.height = 100;
+
+
+	// FPS stuff
+	this.fps = sprite.fps;
+	this.now;
+	this.then = Date.now();
+	this.interval = 1000 / this.fps;
+	this.delta;
 	
+	// Frame stuff
 	this.frameIndex = 0;
-	this.tickCount = 0;
-	this.ticksPerFrame = sprite.ticksPerFrame || 0;
 	this.numberOfFrames = sprite.numberOfFrames || 1;
 	this.loopSprite = sprite.loop || false;
 	this.playSprite = true;
 
-	this.context = this.canvas.getContext("2d");
+	
 	this.width = sprite.width;
 	this.height = sprite.height;
 	this.image = sprite.image;
@@ -19,23 +27,15 @@ function SpriteAnim(canvasId,sprite) {
 	this.update = function () {
 		this.draw();
 
-	    this.tickCount += 1;
-	    if (this.tickCount > this.ticksPerFrame) {
-
-			this.tickCount = 0;
-
-			
-	        if (this.frameIndex < this.numberOfFrames - 1) {	
-	            this.frameIndex += 1;
-	        } else {
-	            if(this.loopSprite) {
-	            	this.frameIndex = 0;
-	            } else {
-	            	this.playSprite = false;
-	            }
-	        }
-	    }
-	    
+        if (this.frameIndex < this.numberOfFrames - 1) {	
+            this.frameIndex += 1;
+        } else {
+            if(this.loopSprite) {
+            	this.frameIndex = 0;
+            } else {
+            	this.playSprite = false;
+            }
+        }
 	};
 	this.draw = function() {
 		this.context.clearRect(0, 0, this.width, this.height);
@@ -56,7 +56,13 @@ function SpriteAnim(canvasId,sprite) {
 		if(this.playSprite) {
 			window.requestAnimationFrame(this.ticker.bind(this));
 		}
-		this.update();
+		this.now = Date.now();
+	    this.delta = this.now - this.then;
+	     
+	    if (this.delta > this.interval) {
+	    	this.then = this.now - (this.delta % this.interval);
+			this.update();
+		}
 	}
 	this.ticker();
 }

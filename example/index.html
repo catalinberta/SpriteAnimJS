@@ -4,7 +4,7 @@
 	<title>Examples of SpriteAnimJS</title>
 </head>
 <body>
-	<canvas id="coinAnimation"></canvas>
+	<canvas id="coinAnimation" style="opacity: 0.05"></canvas>
 	<script type="text/javascript" src="https://code.createjs.com/preloadjs-0.6.0.min.js"></script>
 	<script type="text/javascript" src="../dist/spriteanim-1.0.js"></script>
 	<script type="text/javascript">
@@ -17,7 +17,7 @@
 			height: 100,
 			image: coinImage,
 			numberOfFrames: 10,
-			ticksPerFrame: 2,
+			fps: 5,
 			loop: true
 		});
 
