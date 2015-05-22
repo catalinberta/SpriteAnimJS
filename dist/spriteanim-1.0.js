@@ -1,28 +1,41 @@
-function SpriteAnim(canvasId,sprite) {
+function SpriteAnim(canvasId,spriteObj) {
 	// Canvas
-	this.canvas = document.getElementById(canvasId);
-	this.context = this.canvas.getContext("2d");
-	this.canvas.width = 100;
-	this.canvas.height = 100;
+	this.canvas = document.getElementById(canvasId); // Select given canvas ID
+	this.context = this.canvas.getContext("2d"); // Get context
+	this.canvas.width = spriteObj.frameWidth; // Set canvas width
+	this.canvas.height = spriteObj.frameHeight; // Set canvas width
 
+	// Sprite Info
+	this.width = spriteObj.image.width; // Sprite total width
+	this.height = spriteObj.image.height; // Sprite total height
+	this.image = spriteObj.image; // Sprite image
 
 	// FPS stuff
-	this.fps = sprite.fps;
-	this.now;
-	this.then = Date.now();
-	this.interval = 1000 / this.fps;
-	this.delta;
+	this.fps = spriteObj.fps;
+	this.timestamp_init = Date.now(); // Before ticker starts
+	this.interval = 1000 / this.fps; // Frame's interval in ms 
+	this.timestamp_now, this.delta; // Vars
 	
 	// Frame stuff
-	this.frameIndex = 0;
-	this.numberOfFrames = sprite.numberOfFrames || 1;
-	this.loopSprite = sprite.loop || false;
-	this.playSprite = true;
+	this.frameIndex = 0; // Frame index
+	this.numberOfFrames = (this.width / spriteObj.frameWidth) || 1; // Number of the spritesheet's total frames (horizontally for now, stay tuned)
+	this.loopSprite = spriteObj.loop || false; // If should loop boolean
+	this.playSprite = true; // Play state boolean
 
-	
-	this.width = sprite.width;
-	this.height = sprite.height;
-	this.image = sprite.image;
+	// On start callback
+	this.onStart = function() {
+		this.ticker();
+		if(spriteObj.onStart) {
+			spriteObj.onStart();
+		}
+	};
+
+	// On complete callback
+	this.onComplete = function() {
+		if(spriteObj.onComplete) {
+			spriteObj.onComplete();
+		}
+	};
 
 	this.update = function () {
 		this.draw();
@@ -35,6 +48,7 @@ function SpriteAnim(canvasId,sprite) {
             } else {
             	this.playSprite = false;
             }
+            this.onComplete();
         }
 	};
 	this.draw = function() {
@@ -50,19 +64,19 @@ function SpriteAnim(canvasId,sprite) {
 		0,
 		this.width / this.numberOfFrames,
 		this.height);
-	}
+	};
 
 	this.ticker = function() {
 		if(this.playSprite) {
 			window.requestAnimationFrame(this.ticker.bind(this));
 		}
-		this.now = Date.now();
-	    this.delta = this.now - this.then;
-	     
+		this.timestamp_now = Date.now();
+	    this.delta = this.timestamp_now - this.timestamp_init;
+	    
 	    if (this.delta > this.interval) {
-	    	this.then = this.now - (this.delta % this.interval);
+	    	this.timestamp_init = this.timestamp_now - (this.delta % this.interval);
 			this.update();
 		}
-	}
-	this.ticker();
+	};
+	this.onStart();
 }

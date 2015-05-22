@@ -9,17 +9,19 @@
 	<script type="text/javascript" src="../dist/spriteanim-1.0.js"></script>
 	<script type="text/javascript">
 
-		coinImage = new Image();	
-		coinImage.src = "images/coin-sprite-animation.png";
+		var queue = new createjs.LoadQueue(true);
+	 	queue.loadManifest(["images/coin-sprite-animation.png", {id:"coin", src:"images/coin-sprite-animation.png"}]);
+	 	queue.on("complete", handleComplete, this);
 
-		coin = new SpriteAnim("coinAnimation",{
-			width: 1000,
-			height: 100,
-			image: coinImage,
-			numberOfFrames: 10,
-			fps: 5,
-			loop: true
-		});
+	 	function handleComplete() {
+			coin = new SpriteAnim("coinAnimation",{
+				frameWidth: 100,
+				frameHeight: 100,
+				image: queue.getResult("coin").cloneNode(),
+				fps: 10,
+				loop: true
+			});
+	 	}
 
 	</script>
 </body>
