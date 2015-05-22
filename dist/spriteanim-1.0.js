@@ -3,6 +3,7 @@ function SpriteAnim(canvasId) {
 	this.canvas = document.getElementById(canvasId); // Select given canvas ID
 	this.context = this.canvas.getContext("2d"); // Get context
 
+	// Start method
 	this.start = function(spriteObj) {
 		this.spriteObj = spriteObj;
 		this.canvas.width = this.spriteObj.frameWidth; // Set canvas width
@@ -15,19 +16,33 @@ function SpriteAnim(canvasId) {
 
 		// FPS stuff
 		this.fps = this.spriteObj.fps;
-		this.timestamp_init = Date.now(); // Before ticker starts
+		this.timestamp_init = Date.now(); // Before execution of ticker
 		this.interval = 1000 / this.fps; // Frame's interval in ms 
 		this.timestamp_now, this.delta; // Vars
 		
 		// Frame stuff
-		this.frameIndex = 0; // Frame index
-		this.numberOfFrames = (this.width / spriteObj.frameWidth) || 1; // Number of the spritesheet's total frames (horizontally for now, stay tuned)
+		this.horizontalframeIndex = 0; // Frame index
+		this.verticalFrameIndex = 1;
+		this.horizontalFrames = (this.width / spriteObj.frameWidth) || 1; // Horizontal frames
+		this.verticalFrames = (this.height / spriteObj.frameHeight) || 1; // Vertical frames
+
+
 		this.loopSprite = this.spriteObj.loop || false; // If should loop boolean
 		this.playSprite = true; // Play state boolean
+
+		// Add classname, if specified
+		if(spriteObj.className) {
+			if(this.canvas.className) { // If class attribute already exists
+				this.canvas.className = this.canvas.className + ' ' + spriteObj.className; // Add new class(es) along the existing one(s)
+			} else {
+				this.canvas.className = spriteObj.className; // Add new specified class(es) 
+			}
+		}
 
 		this.onStart(); //onStart callback function
 	}
 
+	// Stop method
 	this.stop = function() {
 		this.playSprite = false;
 		this.context.clearRect(0, 0, this.width, this.height);
@@ -48,11 +63,13 @@ function SpriteAnim(canvasId) {
 		}
 	};
 
+	// New tick update
 	this.update = function () {
 		this.draw();
 
-        if (this.frameIndex < this.numberOfFrames - 1) {	
+        if (this.frameIndex < this.horizontalFrames) {	
             this.frameIndex += 1;
+            console.log('playing frame ' + this.frameIndex)
         } else {
             if(this.loopSprite) {
             	this.frameIndex = 0;
@@ -62,21 +79,24 @@ function SpriteAnim(canvasId) {
             this.onComplete();
         }
 	};
+
+	// Draw new frame
 	this.draw = function() {
 		this.context.clearRect(0, 0, this.width, this.height);
 
 		this.context.drawImage(
 		this.image,
-		this.frameIndex * this.width / this.numberOfFrames,
+		this.frameIndex * this.width / this.horizontalFrames,
 		0,
-		this.width / this.numberOfFrames,
+		this.width / this.horizontalFrames,
 		this.height,
 		0,
 		0,
-		this.width / this.numberOfFrames,
+		this.width / this.horizontalFrames,
 		this.height);
 	};
 
+	// Ticker
 	this.ticker = function() {
 		if(this.playSprite) {
 			window.requestAnimationFrame(this.ticker.bind(this));
