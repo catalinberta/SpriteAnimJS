@@ -15,15 +15,16 @@
 	 		{id:"pig", src:"images/pig.jpg"}
 	 	]);
 	 	queue.on("complete", handleComplete, this);
-
+	 	
 	 	function handleComplete() {
 			coin = new SpriteAnim("c_1");
 			coin.start({
 				frameWidth: 100,
 				frameHeight: 100,
 				image: queue.getResult("coin"),
-				fps: 1,
-				className: 'yello test'
+				fps: 8,
+				className: 'yellow',
+				// loop: true
 			});			
 	 	}
 

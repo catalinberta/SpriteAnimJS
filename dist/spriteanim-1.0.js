@@ -2,7 +2,6 @@ function SpriteAnim(canvasId) {
 	// Canvas
 	this.canvas = document.getElementById(canvasId); // Select given canvas ID
 	this.context = this.canvas.getContext("2d"); // Get context
-
 	// Start method
 	this.start = function(spriteObj) {
 		this.spriteObj = spriteObj;
@@ -22,10 +21,9 @@ function SpriteAnim(canvasId) {
 		
 		// Frame stuff
 		this.horizontalframeIndex = 0; // Frame index
-		this.verticalFrameIndex = 1;
+		this.verticalFrameIndex = 0;
 		this.horizontalFrames = (this.width / spriteObj.frameWidth) || 1; // Horizontal frames
 		this.verticalFrames = (this.height / spriteObj.frameHeight) || 1; // Vertical frames
-
 
 		this.loopSprite = this.spriteObj.loop || false; // If should loop boolean
 		this.playSprite = true; // Play state boolean
@@ -65,29 +63,34 @@ function SpriteAnim(canvasId) {
 
 	// New tick update
 	this.update = function () {
-		this.draw();
-
-        if (this.frameIndex < this.horizontalFrames) {	
-            this.frameIndex += 1;
-            console.log('playing frame ' + this.frameIndex)
+        if (this.horizontalframeIndex < this.horizontalFrames) {	
+        	this.horizontalframeIndex += 1;    
+        	this.draw();
         } else {
-            if(this.loopSprite) {
-            	this.frameIndex = 0;
-            } else {
-            	this.playSprite = false;
-            }
-            this.onComplete();
+        	if(this.verticalFrameIndex < this.verticalFrames) {
+	        	this.verticalFrameIndex += 1;
+	        	this.horizontalframeIndex = 1;
+	        	this.draw();
+	       	} else {
+	       		if(this.loopSprite) {
+	       			this.verticalFrameIndex = 1;
+	        		this.horizontalframeIndex = 1;
+	        		this.draw();
+	       		} else {
+	       			this.stop();
+	       		}
+	       		this.onComplete();
+	       	}
         }
 	};
 
 	// Draw new frame
 	this.draw = function() {
 		this.context.clearRect(0, 0, this.width, this.height);
-
 		this.context.drawImage(
 		this.image,
-		this.frameIndex * this.width / this.horizontalFrames,
-		0,
+		(this.horizontalframeIndex-1) * this.width / this.horizontalFrames,
+		(this.verticalFrameIndex-1) * this.height / this.verticalFrames,
 		this.width / this.horizontalFrames,
 		this.height,
 		0,
@@ -102,7 +105,6 @@ function SpriteAnim(canvasId) {
 			window.requestAnimationFrame(this.ticker.bind(this));
 			this.timestamp_now = Date.now();
 		    this.delta = this.timestamp_now - this.timestamp_init;
-		    
 		    if (this.delta > this.interval) {
 		    	this.timestamp_init = this.timestamp_now - (this.delta % this.interval);
 				this.update();
