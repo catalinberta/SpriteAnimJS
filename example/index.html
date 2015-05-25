@@ -3,8 +3,8 @@
 <head>
 	<title>Examples of SpriteAnimJS</title>
 </head>
-<body id="body" onload="init()">
-	<!-- <canvas id="c_1" style="opacity: 0.1"></canvas> -->
+<body id="body" onload="init();">
+	<canvas id="c_1" style="opacity: 0.1"></canvas>
 	<div class="fpsContainer" style="display: none" id="fpsContainer">
   <div class="fps">fps: <span id="fps">37</span></div>
   <div id="topUI">
@@ -14,8 +14,7 @@
 </div>
 	<canvas id="canvas" style="opacity: 0.1"></canvas>
 	<script type="text/javascript" src="https://code.createjs.com/preloadjs-0.6.0.min.js"></script>
-	<!--<script type="text/javascript" src="../dist/spriteanim-1.0.js"></script>-->
-	<script type="text/javascript" src="../dist/spritelibrary.js"></script>
+	<script type="text/javascript" src="../dist/spriteanim-1.0.js"></script>
 	
 	<script id="spriteVertexShader" type="text/webgl">
 uniform float u_frameOffset;
@@ -94,15 +93,20 @@ void main() {
 	 	queue.on("complete", handleComplete, this);
 	 	
 	 	function handleComplete() {
-			// coin = new SpriteAnim("c_1");
-			// coin.start({
-			// 	frameWidth: 100,
-			// 	frameHeight: 100,
-			// 	image: queue.getResult("coin"),
-			// 	fps: 8,
-			// 	className: 'yellow',
-			// 	// loop: true
-			// });			
+			coin = new SpriteAnim("c_1");
+      if(coin.webgl_support(document.getElementById('canvas'))) {
+        console.log('has support!!!')
+      } else {
+        console.log('no support')
+      }
+			coin.start({
+				frameWidth: 100,
+				frameHeight: 100,
+				image: queue.getResult("coin"),
+				fps: 8,
+				className: 'yellow',
+				// loop: true
+			});			
 	 	}
 
 	</script>
