@@ -12,17 +12,12 @@
   <div style="cursor: pointer; color: gray;">500</div><div style="cursor: pointer; color: gray;">1000</div><div style="cursor: pointer; color: gray;">1500</div><div style="cursor: pointer; color: red;">2000</div><div style="cursor: pointer; color: gray;">2500</div><div style="cursor: pointer; color: gray;">3000</div><div style="cursor: pointer; color: gray;">4000</div><div style="cursor: pointer; color: gray;">5000</div><div style="cursor: pointer; color: gray;">10000</div></div>
     <div><a href="readme.html" style="color: #FFFFFF;">More info...</a></div>
 </div>
-	<canvas id="canvas" width="620" height="680"></canvas>
+	<canvas id="canvas" style="opacity: 0.1"></canvas>
 	<script type="text/javascript" src="https://code.createjs.com/preloadjs-0.6.0.min.js"></script>
 	<!--<script type="text/javascript" src="../dist/spriteanim-1.0.js"></script>-->
-	<script type="text/javascript" src="../dist/log.js"></script>
-	<script type="text/javascript" src="../dist/base.js"></script>
-	<script type="text/javascript" src="../dist/misc.js"></script>
-	<script type="text/javascript" src="../dist/string.js"></script>
-	<script type="text/javascript" src="../dist/webgl.js"></script>
-	<script type="text/javascript" src="../dist/fps.js"></script>
 	<script type="text/javascript" src="../dist/spritelibrary.js"></script>
-	<script type="text/javascript" src="../dist/sprites.js"></script>
+	<script type="text/javascript" src="../dist/base.js"></script>
+	
 	<script id="spriteVertexShader" type="text/something-not-javascript">
 uniform float u_frameOffset;
 
@@ -155,24 +150,25 @@ void main() {
 </script>
 	<script type="text/javascript">
 
-		// var queue = new createjs.LoadQueue(true);
-	 // 	queue.loadManifest([
-	 // 		{id:"coin", src:"images/coin-sprite-animation.png"},
-	 // 		{id:"pig", src:"images/pig.jpg"}
-	 // 	]);
-	 // 	queue.on("complete", handleComplete, this);
+		var queue = new createjs.LoadQueue(true);
+	 	queue.loadManifest([
+	 		{id:"coin", src:"images/coin-sprite-animation.png"},
+	 		{id:"pig", src:"images/pig.jpg"},
+	 		{id:"explosion", src:"images/explosion.png"}
+	 	]);
+	 	queue.on("complete", handleComplete, this);
 	 	
-	 // 	function handleComplete() {
-		// 	coin = new SpriteAnim("c_1");
-		// 	coin.start({
-		// 		frameWidth: 100,
-		// 		frameHeight: 100,
-		// 		image: queue.getResult("coin"),
-		// 		fps: 8,
-		// 		className: 'yellow',
-		// 		// loop: true
-		// 	});			
-	 // 	}
+	 	function handleComplete() {
+			// coin = new SpriteAnim("c_1");
+			// coin.start({
+			// 	frameWidth: 100,
+			// 	frameHeight: 100,
+			// 	image: queue.getResult("coin"),
+			// 	fps: 8,
+			// 	className: 'yellow',
+			// 	// loop: true
+			// });			
+	 	}
 
 	</script>
 </body>
