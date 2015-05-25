@@ -3,7 +3,7 @@
 <head>
 	<title>Examples of SpriteAnimJS</title>
 </head>
-<body id="body" onload="init();">
+<body id="body" onload="">
 	<canvas id="c_1" style="opacity: 0.1"></canvas>
 	<div class="fpsContainer" style="display: none" id="fpsContainer">
   <div class="fps">fps: <span id="fps">37</span></div>
@@ -94,18 +94,20 @@ void main() {
 	 	
 	 	function handleComplete() {
 			coin = new SpriteAnim("c_1");
-      if(coin.webgl_support(document.getElementById('canvas'))) {
-        console.log('has support!!!')
-      } else {
-        console.log('no support')
-      }
+     
 			coin.start({
 				frameWidth: 100,
 				frameHeight: 100,
 				image: queue.getResult("coin"),
 				fps: 8,
 				className: 'yellow',
-				// loop: true
+        onStart: function() {
+          console.log('Starting...')
+        },
+        onComplete: function() {
+          console.log('Ending...')
+        },
+				loop: false
 			});			
 	 	}
 
