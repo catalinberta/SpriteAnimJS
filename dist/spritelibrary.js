@@ -1,41 +1,244 @@
-function getScriptText(id) {
-  var elem = document.getElementById(id);
-  if (!elem) {
-    throw 'no element: ' + id
+/*
+ * Copyright 2011, Google Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+var tdl = tdl || {};
+tdl.webgl = tdl.webgl || {};
+gl = null;
+
+tdl.webgl.setupWebGL = function(canvas, opt_attribs, opt_onError) {
+
+  opt_onError = opt_onError;
+
+  if (canvas.addEventListener) {
+    canvas.addEventListener("webglcontextcreationerror", function(event) {
+          opt_onError(event.statusMessage);
+        }, false);
   }
-  return elem.text;
+  var context = tdl.webgl.create3DContext(canvas, opt_attribs);
+  if (context) {
+    if (canvas.addEventListener) {
+      canvas.addEventListener("webglcontextlost", function(event) {
+        //tdl.log("call tdl.webgl.handleContextLost");
+        event.preventDefault();
+        tdl.webgl.handleContextLost(canvas);
+      }, false);
+      canvas.addEventListener("webglcontextrestored", function(event) {
+        //tdl.log("call tdl.webgl.handleContextRestored");
+        tdl.webgl.handleContextRestored(canvas);
+      }, false);
+    }
+  }
+  return context;
+};
+
+tdl.webgl.create3DContext = function(canvas, opt_attribs) {
+  if (opt_attribs === undefined) {
+    opt_attribs = {alpha:false};
+    tdl.misc.applyUrlSettings(opt_attribs, 'webgl');
+  }
+  var names = ["webgl", "experimental-webgl"];
+  var context = null;
+  for (var ii = 0; ii < names.length; ++ii) {
+    try {
+      context = canvas.getContext(names[ii], opt_attribs);
+    } catch(e) {}
+    if (context) {
+      break;
+    }
+  }
+  if (context) {
+    gl = context;
+    if (!canvas.tdl) {
+      canvas.tdl = {};
+    }
+
+    context.tdl = {};
+    context.tdl.depthTexture = tdl.webgl.getExtensionWithKnownPrefixes("WEBGL_depth_texture");
+
+    function returnFalse() {
+      return false;
+    }
+
+    canvas.onselectstart = returnFalse;
+    canvas.onmousedown = returnFalse;
+  }
+  return context;
+};
+
+/**
+ * Browser prefixes for extensions.
+ * @type {!Array.<string>}
+ */
+tdl.webgl.browserPrefixes_ = [
+  "",
+  "MOZ_",
+  "OP_",
+  "WEBKIT_"
+];
+
+tdl.webgl.getExtensionWithKnownPrefixes = function(name) {
+  for (var ii = 0; ii < tdl.webgl.browserPrefixes_.length; ++ii) {
+    var prefixedName = tdl.webgl.browserPrefixes_[ii] + name;
+    var ext = gl.getExtension(prefixedName);
+    if (ext) {
+      return ext;
+    }
+  }
+};
+
+tdl.webgl.requestAnimationFrame = function(callback, element) {
+  if (!tdl.webgl.requestAnimationFrameImpl_) {
+    tdl.webgl.requestAnimationFrameImpl_ = function() {
+      var functionNames = [
+        "requestAnimationFrame",
+        "webkitRequestAnimationFrame",
+        "mozRequestAnimationFrame",
+        "oRequestAnimationFrame",
+        "msRequestAnimationFrame"
+      ];
+      for (var jj = 0; jj < functionNames.length; ++jj) {
+        var functionName = functionNames[jj];
+        if (window[functionName]) {
+          //tdl.log("using ", functionName);
+          return function(name) {
+            return function(callback, element) {
+              return window[name].call(window, callback, element);
+            };
+          }(functionName);
+        }
+      }
+      tdl.log("using window.setTimeout");
+      return function(callback, element) {
+           return window.setTimeout(callback, 1000 / 70);
+        };
+    }();
+  }
+
+  return tdl.webgl.requestAnimationFrameImpl_(callback, element);
+};
+
+
+var atlas = new SpriteAtlas();
+var canvas;
+var lastTime;
+var spriteSystem;
+var fpsTimer;
+var fpsElem;
+var countElements = [];
+
+var browserWidth;
+var browserHeight;
+
+function init() {
+  canvas = document.getElementById('canvas');
+  gl = tdl.webgl.setupWebGL(canvas, { antialias: false });
+  if (!gl)
+    return;
+
+  spriteSystem = new SpriteSystem();
+
+  winresize();
+  lastTime = new Date().getTime() * 0.001;
+  
+
+  atlas.onload = start;
+
+  atlas.addSpriteSheet('boom', {url: 'images/explosion.png', frames: 59,
+                                spritesPerRow: 8,
+                                width: 256, height: 256});
+
+  atlas.startLoading();
 }
 
-function loadShader(shaderSource, shaderType) {
-  // Create the shader object
-  var shader = gl.createShader(shaderType);
-  if (shader == null) {
-    throw "Error: unable to create shader";
-  }
-
-  // Load the shader source
-  gl.shaderSource(shader, shaderSource);
-
-  // Compile the shader
-  gl.compileShader(shader);
-
-  // Check the compile status
-  var compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-  if (!compiled) {
-    // Something went wrong during compilation; get the error
-    lastError = gl.getShaderInfoLog(shader);
-    gl.deleteShader(shader);
-    throw "Error compiling shader '" + shaderSource + "': " + lastError;
-  }
-
-  return shader;
+function start() {
+  atlas.spriteSheets_[0].createSprite(spriteSystem);;
+  render();
 }
 
 
-//----------------------------------------------------------------------
-// SpriteSheet
-//
+function render() {
+  tdl.webgl.requestAnimationFrame(render, canvas);
+  var now = new Date().getTime() * 0.001;
+  var deltaT = now - lastTime;
 
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  spriteSystem.draw(atlas, 0);
+
+  lastTime = now;
+}
+
+// The following code snippets were borrowed basically verbatim from JSGameBench.
+
+function getWindowSize() {
+  var width = 0;
+  var height = 0;
+
+  if (typeof(window.innerWidth) == 'number') {
+    width = window.innerWidth;
+    height = window.innerHeight;
+  } else if (window.document.documentElement &&
+             (window.document.documentElement.clientWidth ||
+              window.document.documentElement.clientHeight)) {
+    width = window.document.documentElement.clientWidth;
+    height = window.document.documentElement.clientHeight;
+  } else if (window.document.body &&
+             (window.document.body.clientWidth ||
+              window.document.body.clientHeight)) {
+    width = window.document.body.clientWidth;
+    height = window.document.body.clientHeight;
+  }
+
+  browserWidth = width;
+  browserHeight = height;
+}
+
+function winresize() {
+  getWindowSize();
+  canvas.width = 200;//browserWidth;
+  canvas.height = 200;//browserHeight;
+  spriteSystem.setScreenSize(200, 200);
+}
+/*************************************************************************************************************************
+**************************************************************************************************************************
+***************************************************************************************************************************
+***************************************************************************************************************************
+***************************************************************************************************************************
+***************************************************************************************************************************
+***************************************************************************************************************************
+***************************************************************************************************************************
+***************************************************************************************************************************
+**************************************************************************************************************************/
 function SpriteSheet(atlas, name, params) {
   this.atlas_ = atlas;
   this.name_ = name;
@@ -122,20 +325,12 @@ SpriteAtlas.prototype.startLoading = function() {
   }
 };
 
-SpriteAtlas.prototype.numSpriteSheets = function() {
-  return this.spriteSheets_.length;
-};
-
-SpriteAtlas.prototype.getSpriteSheet = function(i) {
-  return this.spriteSheets_[i];
-};
-
-SpriteAtlas.prototype.bindTextures = function() {
-  for (var ii = 0; ii < this.currentTextureUnit_; ++ii) {
-    gl.activeTexture(gl.TEXTURE0 + ii);
-    gl.bindTexture(gl.TEXTURE_2D, this.textures_[ii]);
-  }
-};
+// SpriteAtlas.prototype.bindTextures = function() {
+//   for (var ii = 0; ii < this.currentTextureUnit_; ++ii) {
+//     gl.activeTexture(gl.TEXTURE0 + ii);
+//     gl.bindTexture(gl.TEXTURE_2D, this.textures_[ii]);
+//   }
+// };
 
 SpriteAtlas.prototype.spriteSheetLoaded_ = function(sheet, image, params) {
   // Upload the sprite sheet into a texture. This is where we would
@@ -190,9 +385,8 @@ SpriteSystem.prototype.clearAllSprites = function() {
 
 SpriteSystem.prototype.loadProgram_ = function(options) {
   var fragmentShaderName = (options && options['slow']) ? 'slowSpriteFragmentShader' : 'spriteFragmentShader';
-  console.log("SpriteSystem using fragment shader " + fragmentShaderName);
-  var vertexShader = loadShader(getScriptText('spriteVertexShader'), gl.VERTEX_SHADER);
-  var fragmentShader = loadShader(getScriptText(fragmentShaderName), gl.FRAGMENT_SHADER);
+  var vertexShader = loadShader(document.getElementById('spriteVertexShader').text, gl.VERTEX_SHADER);
+  var fragmentShader = loadShader(document.getElementById(fragmentShaderName).text, gl.FRAGMENT_SHADER);
   var program = gl.createProgram();
   gl.attachShader(program, vertexShader);
   gl.attachShader(program, fragmentShader);
@@ -244,10 +438,6 @@ SpriteSystem.prototype.resizeCapacity_ = function(capacity, preserveOldContents)
   this.capacity_ = capacity;
   this.positionData_ = new Float32Array(2 * capacity);
   this.constantData_ = new Float32Array(SpriteSystem.constantAttributeStride_ * capacity);
-  // Keep the starting positions, velocities and sprite sizes around
-  // in pure JS arrays as a concession to browsers where reads from
-  // Float32Array aren't fast. This should not be necessary for much
-  // longer.
   this.startPositionData_ = new Array(2 * capacity);
   this.velocityData_ = new Array(2 * capacity);
   this.spriteSizeData_ = new Array(capacity);
@@ -274,28 +464,6 @@ SpriteSystem.prototype.resizeCapacity_ = function(capacity, preserveOldContents)
     }
   }
 };
-
-// The vertex attributes are laid out in the buffer in the following way:
-// Block 1:
-//   centerPosition
-// Block 2 (interleaved):
-//   rotation
-//   spriteSize
-//   cornerOffset
-//   spriteTextureSize
-//   spritesPerRow
-//   numFrames
-//
-// The reason is that we want to be able to update the positions of
-// the sprites independently, since the rest of the data for each
-// sprite is constant after creation. We are doing the integration of
-// the velocity in JavaScript to prove that it can be done at high
-// speed, but in a special case like the JSGameBench scenario where
-// sprites just move in a straight line, it would be much more
-// efficient to send down a uniform time parameter and compute the
-// position in the vertex shader, since then we would not need to
-// iterate over all particles per frame and would not need to send
-// down per-particle information per frame.
 
 // These offsets are in units of floating-point numbers.
 SpriteSystem.constantAttributeInfo_ = [
@@ -328,7 +496,6 @@ SpriteSystem.initialized_ = false;
 SpriteSystem.initialize_ = function() {
   if (SpriteSystem.initialized_)
     return;
-  console.log("Initializing globals for SpriteSystem");
   var constantAttributeInfo = SpriteSystem.constantAttributeInfo_;
   var cumulativeOffset = 0;
   for (var ii = 0; ii < constantAttributeInfo.length; ++ii) {
@@ -342,9 +509,7 @@ SpriteSystem.initialize_ = function() {
 SpriteSystem.prototype.dumpOffsets = function() {
   var constantAttributeInfo = SpriteSystem.constantAttributeInfo_;
   for (var ii = 0; ii < constantAttributeInfo.length; ++ii) {
-    console.log("Attribute at index " + ii + ": size = " + constantAttributeInfo[ii].size + ", offset = " + constantAttributeInfo[ii].offset);
   }
-  console.log("Constant attribute stride = " + SpriteSystem.constantAttributeStride_);
 };
 
 SpriteSystem.offsets_ = [
@@ -411,12 +576,11 @@ SpriteSystem.prototype.draw = function(atlas, deltaTime) {
   gl.disable(gl.DEPTH_TEST);
   gl.disable(gl.CULL_FACE);
   gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
   // Recompute all sprites' positions. Wrap around offscreen.
   var numVertices = this.numVertices_;
   for (var ii = 0; ii < numVertices; ++ii) {
-    var newPosX = this.startPositionData_[2 * ii] + deltaTime * this.velocityData_[2 * ii];
-    var newPosY = this.startPositionData_[2 * ii + 1] + deltaTime * this.velocityData_[2 * ii + 1];
+    var newPosX = this.startPositionData_[0] ;
+    var newPosY = this.startPositionData_[0];
 
     var spriteSize = this.spriteSizeData_[ii];
     if (newPosX > canvas.width + 1.1 * spriteSize) {
@@ -430,11 +594,10 @@ SpriteSystem.prototype.draw = function(atlas, deltaTime) {
     } else if (newPosY < -1.1 * spriteSize) {
       newPosY = canvas.height + spriteSize;
     }
-
-    this.startPositionData_[2 * ii] = newPosX;
-    this.startPositionData_[2 * ii + 1] = newPosY;
-    this.positionData_[2 * ii] = newPosX;
-    this.positionData_[2 * ii + 1] = newPosY;
+    // this.startPositionData_[0] = 0;
+    // this.startPositionData_[2 * ii + 1] = 0;
+    this.positionData_[2 * ii] = 111;
+    this.positionData_[2 * ii + 1] = 111;
   }
 
   // Upload all sprites' positions.
@@ -445,7 +608,10 @@ SpriteSystem.prototype.draw = function(atlas, deltaTime) {
   gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.precisePositionView_);
 
   // Bind all textures.
-  atlas.bindTextures();
+  for (var ii = 0; ii < atlas.currentTextureUnit_; ++ii) {
+    gl.activeTexture(gl.TEXTURE0 + ii);
+    gl.bindTexture(gl.TEXTURE_2D, atlas.textures_[ii]);
+  }
 
   // Prepare to draw.
   gl.useProgram(this.program_);
@@ -527,3 +693,26 @@ SpriteSystem.prototype.addVertex_ = function(centerX, centerY,
                    Float32Array.BYTES_PER_ELEMENT * (this.positionData_.length + baseIndex),
                    this.constantData_.subarray(baseIndex, baseIndex + SpriteSystem.constantAttributeStride_));
 };
+
+
+function loadShader(shaderSource, shaderType) {
+  // Create the shader object
+  var shader = gl.createShader(shaderType);
+
+  // Load the shader source
+  gl.shaderSource(shader, shaderSource);
+
+  // Compile the shader
+  gl.compileShader(shader);
+
+  // Check the compile status
+  var compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+  if (!compiled) {
+    // Something went wrong during compilation; get the error
+    lastError = gl.getShaderInfoLog(shader);
+    gl.deleteShader(shader);
+    throw "Error compiling shader '" + shaderSource + "': " + lastError;
+  }
+
+  return shader;
+}
