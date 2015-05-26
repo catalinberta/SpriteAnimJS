@@ -200,12 +200,10 @@ SpriteAnim.prototype.webgl = function(spriteObj) {
 	this.textureUnit_ = 0;
 	this.perSpriteFrameOffset_ = 0;
 	this.spriteSheets_.push(this);
-	console.log(this.spriteSheet)
-	this.SPRITESHEET = new SpriteSheet(this, this.name_, this.params_);
 	this.startLoading();
 
 	function start() {
-		this.SPRITESHEET.createSprite(spriteSystem);
+		this.createSprite(spriteSystem);
 		render();
 	}
 
@@ -340,7 +338,7 @@ SpriteAnim.prototype.requestAnimationFrame = function(callback, element) {
 SpriteAnim.prototype.startLoading = function() {
 	var len = this.spriteSheets_.length;
 	this.numOutstandingRequests_ = len;
-	this.SPRITESHEET.spriteSheetStartLoading();
+	this.spriteSheetStartLoading();
 };
 
 SpriteAnim.prototype.spriteSheetLoaded_ = function(sheet, image, params) {
@@ -370,7 +368,7 @@ function SpriteSheet(atlas, name, params) {
 	this.perSpriteFrameOffset_ = 0;
 }
 
-SpriteSheet.prototype.spriteSheetStartLoading = function() {
+SpriteAnim.prototype.spriteSheetStartLoading = function() {
 	var that = this;
 	var image = new Image();
 	this.image_ = image;
@@ -380,13 +378,13 @@ SpriteSheet.prototype.spriteSheetStartLoading = function() {
 	image.src = this.params_.url;
 };
 
-SpriteSheet.prototype.initialize = function(textureUnit, width, height) {
+SpriteAnim.prototype.initialize = function(textureUnit, width, height) {
 	this.textureUnit_ = textureUnit;
 	this.textureWidth_ = width;
 	this.textureHeight_ = height;
 };
 
-SpriteSheet.prototype.createSprite = function(system) {
+SpriteAnim.prototype.createSprite = function(system) {
 	var screenWidth = system.screenWidth();
 	var screenHeight = system.screenHeight();
 	// Position the sprite at a random position
@@ -420,7 +418,7 @@ SpriteSheet.prototype.createSprite = function(system) {
 		textureWeights);
 };
 
-SpriteSheet.prototype.onload_ = function() {
+SpriteAnim.prototype.onload_ = function() {
 	this.atlas_.spriteSheetLoaded_(this, this.image_, this.params_);
 };
 // "options" is a JavaScript object containing key/value pairs. The
