@@ -4,7 +4,6 @@
 	<title>Examples of SpriteAnimJS</title>
 </head>
 <body id="body" onload="">
-	<canvas id="c_1" style="opacity: 0.1"></canvas>
 	<div class="fpsContainer" style="display: none" id="fpsContainer">
   <div class="fps">fps: <span id="fps">37</span></div>
   <div id="topUI">
@@ -13,6 +12,7 @@
     <div><a href="readme.html" style="color: #FFFFFF;">More info...</a></div>
 </div>
 	<canvas id="canvas" style="opacity: 0.1"></canvas>
+  <canvas id="canvas2" style="opacity: 0.1"></canvas>
 	<script type="text/javascript" src="https://code.createjs.com/preloadjs-0.6.0.min.js"></script>
 	<script type="text/javascript" src="../dist/spriteanim-1.0.js"></script>
 	
@@ -93,7 +93,8 @@ void main() {
 	 	queue.on("complete", handleComplete, this);
 	 	
 	 	function handleComplete() {
-			coin = new SpriteAnim("c_1");
+			coin = new SpriteAnim("canvas");
+      coin2 = new SpriteAnim("canvas2");
      
 			coin.start({
 				frameWidth: 100,
@@ -109,6 +110,20 @@ void main() {
         },
 				loop: false
 			});			
+      coin2.start({
+        frameWidth: 100,
+        frameHeight: 100,
+        image: queue.getResult("coin"),
+        fps: 8,
+        className: 'yellow',
+        onStart: function() {
+          console.log('Starting...')
+        },
+        onComplete: function() {
+          console.log('Ending...')
+        },
+        loop: false
+      });   
 	 	}
 
 	</script>

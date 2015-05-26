@@ -151,114 +151,22 @@ function SpriteAnim(canvasId) {
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-SpriteAnim.prototype.webgl_support = function(canvas) {
-	var names = ["webgl", "experimental-webgl"];
-	var context = null;
-	for (var ii = 0; ii < names.length; ++ii) {
-		try {
-			context = canvas.getContext(names[ii]);
-		} catch(e) {}
-		if (context) {
-			break;
-		}
-	}
-	if (context) {
-		return true;
-	}
-}
 SpriteAnim.prototype.webgl = function(spriteObj) {
-	var tdl = tdl || {};
-	tdl.webgl = tdl.webgl || {};
+	var that = this;
+	this.onload = null;
+	this.numOutstandingRequests_ = 0;
+	this.spriteSheets_ = [];
+	this.textures_ = [];
+	this.currentTextureUnit_ = 0;
 	gl = null;
 
-	tdl.webgl.create3DContext = function(canvas, opt_attribs) {
-		if (opt_attribs === undefined) {
-			opt_attribs = {alpha:false};
-			tdl.misc.applyUrlSettings(opt_attribs, 'webgl');
-		}
-		var names = ["webgl", "experimental-webgl"];
-		var context = null;
-		for (var ii = 0; ii < names.length; ++ii) {
-			try {
-				context = canvas.getContext(names[ii], opt_attribs);
-			} catch(e) {}
-			if (context) {
-				break;
-			}
-		}
-		if (context) {
-			gl = context;
-			if (!canvas.tdl) {
-				canvas.tdl = {};
-			}
-
-			context.tdl = {};
-			context.tdl.depthTexture = tdl.webgl.getExtensionWithKnownPrefixes("WEBGL_depth_texture");
-
-			function returnFalse() {
-				return false;
-			}
-
-			canvas.onselectstart = returnFalse;
-			canvas.onmousedown = returnFalse;
-		}
-		return context;
-	};
-
-	/**
-	 * Browser prefixes for extensions.
-	 * @type {!Array.<string>}
-	 */
-	tdl.webgl.browserPrefixes_ = [
+	this.browserPrefixes_ = [
 	"",
 	"MOZ_",
 	"OP_",
 	"WEBKIT_"
 	];
 
-	tdl.webgl.getExtensionWithKnownPrefixes = function(name) {
-		for (var ii = 0; ii < tdl.webgl.browserPrefixes_.length; ++ii) {
-			var prefixedName = tdl.webgl.browserPrefixes_[ii] + name;
-			var ext = gl.getExtension(prefixedName);
-			if (ext) {
-				return ext;
-			}
-		}
-	};
-
-	tdl.webgl.requestAnimationFrame = function(callback, element) {
-		if (!tdl.webgl.requestAnimationFrameImpl_) {
-			tdl.webgl.requestAnimationFrameImpl_ = function() {
-				var functionNames = [
-				"requestAnimationFrame",
-				"webkitRequestAnimationFrame",
-				"mozRequestAnimationFrame",
-				"oRequestAnimationFrame",
-				"msRequestAnimationFrame"
-				];
-				for (var jj = 0; jj < functionNames.length; ++jj) {
-					var functionName = functionNames[jj];
-					if (window[functionName]) {
-			  			//tdl.log("using ", functionName);
-			 			return function(name) {
-						  	return function(callback, element) {
-						  		return window[name].call(window, callback, element);
-						  	};
-			  			}(functionName);
-					}
-				}
-				tdl.log("using window.setTimeout");
-				return function(callback, element) {
-					return window.setTimeout(callback, 1000 / 70);
-				};
-			}();
-		}
-		return tdl.webgl.requestAnimationFrameImpl_(callback, element);
-	};
-
-
-	var atlas = new SpriteAtlas();
 	var canvas;
 	var lastTime;
 	var spriteSystem;
@@ -270,8 +178,8 @@ SpriteAnim.prototype.webgl = function(spriteObj) {
 	var browserHeight;
 
 
-	canvas = document.getElementById('canvas');
-	gl = tdl.webgl.create3DContext(canvas, {antialias: false})
+	canvas = this.canvas;
+	gl = this.create3DContext(canvas, {antialias: false})
 	if (!gl)
 		return;
 	spriteSystem = new SpriteSystem(spriteObj);
@@ -279,35 +187,39 @@ SpriteAnim.prototype.webgl = function(spriteObj) {
 	winresize();
 	lastTime = new Date().getTime() * 0.001;
 
+	this.onload = start;
 
-	atlas.onload = start;
+	
 
-	atlas.addSpriteSheet('boom', {url: 'images/explosion.png', frames: 59,
+	//addSpriteSheet
+	this.atlas_ = this;
+	this.name_ = 'boom';
+	this.params_ = {url: 'images/explosion.png', frames: 59,
 		spritesPerRow: 8,
-		width: 256, height: 256});
-
-	atlas.startLoading();
+		width: 256, height: 256};
+	this.textureUnit_ = 0;
+	this.perSpriteFrameOffset_ = 0;
+	this.spriteSheets_.push(this);
+	console.log(this.spriteSheet)
+	this.SPRITESHEET = new SpriteSheet(this, this.name_, this.params_);
+	this.startLoading();
 
 	function start() {
-		atlas.spriteSheets_[0].createSprite(spriteSystem);
+		this.SPRITESHEET.createSprite(spriteSystem);
 		render();
 	}
 
-
 	function render() {
-		tdl.webgl.requestAnimationFrame(render, canvas);
+		this.requestAnimationFrame(render, canvas);
 		var now = new Date().getTime() * 0.001;
 		var deltaT = now - lastTime;
 
 		gl.viewport(0, 0, canvas.width, canvas.height);
 		gl.clearColor(0.0, 0.0, 0.0, 0);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-		spriteSystem.draw(atlas, 0);
+		spriteSystem.draw(that, 0);
 		lastTime = now;
 	}
-
-	// The following code snippets were borrowed basically verbatim from JSGameBench.
 
 	function getWindowSize() {
 		var width = 0;
@@ -339,27 +251,99 @@ SpriteAnim.prototype.webgl = function(spriteObj) {
 		spriteSystem.setScreenSize(200, 200);
 	}
 }
-function SpriteAtlas() {
-	this.onload = null;
-	this.numOutstandingRequests_ = 0;
-	this.spriteSheets_ = [];
-	this.textures_ = [];
-	this.currentTextureUnit_ = 0;
+SpriteAnim.prototype.webgl_support = function(canvas) {
+	var names = ["webgl", "experimental-webgl"];
+	var context = null;
+	for (var ii = 0; ii < names.length; ++ii) {
+		try {
+			context = canvas.getContext(names[ii]);
+		} catch(e) {}
+		if (context) {
+			break;
+		}
+	}
+	if (context) {
+		return true;
+	}
 }
+SpriteAnim.prototype.create3DContext = function(canvas, opt_attribs) {
+	if (opt_attribs === undefined) {
+		opt_attribs = {alpha:false};
+		tdl.misc.applyUrlSettings(opt_attribs, 'webgl');
+	}
+	var names = ["webgl", "experimental-webgl"];
+	var context = null;
+	for (var ii = 0; ii < names.length; ++ii) {
+		try {
+			context = canvas.getContext(names[ii], opt_attribs);
+		} catch(e) {}
+		if (context) {
+			break;
+		}
+	}
+	if (context) {
+		gl = context;
+		if (!canvas.tdl) {
+			canvas.tdl = {};
+		}
 
-SpriteAtlas.prototype.addSpriteSheet = function(name, params) {
-	this.spriteSheets_.push(new SpriteSheet(this, name, params));
+		context.tdl = {};
+		context.tdl.depthTexture = this.getExtensionWithKnownPrefixes("WEBGL_depth_texture");
+
+		function returnFalse() {
+			return false;
+		}
+
+		canvas.onselectstart = returnFalse;
+		canvas.onmousedown = returnFalse;
+	}
+	return context;
 };
-
-SpriteAtlas.prototype.startLoading = function() {
-	var len = this.spriteSheets_.length;
-	this.numOutstandingRequests_ = len;
-	for (var ii = 0; ii < len; ++ii) {
-		this.spriteSheets_[ii].startLoading();
+SpriteAnim.prototype.getExtensionWithKnownPrefixes = function(name) {
+	for (var ii = 0; ii < this.browserPrefixes_.length; ++ii) {
+		var prefixedName = this.browserPrefixes_[ii] + name;
+		var ext = gl.getExtension(prefixedName);
+		if (ext) {
+			return ext;
+		}
 	}
 };
+SpriteAnim.prototype.requestAnimationFrame = function(callback, element) {
+	if (!this.requestAnimationFrameImpl_) {
+		tdl.webgl.requestAnimationFrameImpl_ = function() {
+			var functionNames = [
+			"requestAnimationFrame",
+			"webkitRequestAnimationFrame",
+			"mozRequestAnimationFrame",
+			"oRequestAnimationFrame",
+			"msRequestAnimationFrame"
+			];
+			for (var jj = 0; jj < functionNames.length; ++jj) {
+				var functionName = functionNames[jj];
+				if (window[functionName]) {
+		  			//tdl.log("using ", functionName);
+		 			return function(name) {
+					  	return function(callback, element) {
+					  		return window[name].call(window, callback, element);
+					  	};
+		  			}(functionName);
+				}
+			}
+			return function(callback, element) {
+				return window.setTimeout(callback, 1000 / 70);
+			};
+		}();
+	}
+	return this.requestAnimationFrameImpl_(callback, element);
+};
 
-SpriteAtlas.prototype.spriteSheetLoaded_ = function(sheet, image, params) {
+SpriteAnim.prototype.startLoading = function() {
+	var len = this.spriteSheets_.length;
+	this.numOutstandingRequests_ = len;
+	this.SPRITESHEET.spriteSheetStartLoading();
+};
+
+SpriteAnim.prototype.spriteSheetLoaded_ = function(sheet, image, params) {
 	var texture = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, texture);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -386,7 +370,7 @@ function SpriteSheet(atlas, name, params) {
 	this.perSpriteFrameOffset_ = 0;
 }
 
-SpriteSheet.prototype.startLoading = function() {
+SpriteSheet.prototype.spriteSheetStartLoading = function() {
 	var that = this;
 	var image = new Image();
 	this.image_ = image;
