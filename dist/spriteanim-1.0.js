@@ -158,7 +158,7 @@ SpriteAnim.prototype.webgl = function(spriteObj) {
 	this.spriteSheets_ = [];
 	this.textures_ = [];
 	this.currentTextureUnit_ = 0;
-	gl = null;
+	this.gl = null;
 
 	this.browserPrefixes_ = [
 	"",
@@ -177,19 +177,16 @@ SpriteAnim.prototype.webgl = function(spriteObj) {
 	var browserWidth;
 	var browserHeight;
 
-
 	canvas = this.canvas;
-	gl = this.create3DContext(canvas, {antialias: false})
-	if (!gl)
+	this.gl = this.create3DContext(canvas, {antialias: false})
+	if (!this.gl)
 		return;
-	spriteSystem = new SpriteSystem(spriteObj);
+	spriteSystem = new SpriteSystem(spriteObj,this.gl);
 
 	winresize();
 	lastTime = new Date().getTime() * 0.001;
 
 	this.onload = start;
-
-	
 
 	//addSpriteSheet
 	this.atlas_ = this;
@@ -203,7 +200,7 @@ SpriteAnim.prototype.webgl = function(spriteObj) {
 	this.startLoading();
 
 	function start() {
-		this.createSprite(spriteSystem);
+		this.spriteSheetCreateSprite(spriteSystem);
 		render();
 	}
 
@@ -211,10 +208,9 @@ SpriteAnim.prototype.webgl = function(spriteObj) {
 		this.requestAnimationFrame(render, canvas);
 		var now = new Date().getTime() * 0.001;
 		var deltaT = now - lastTime;
-
-		gl.viewport(0, 0, canvas.width, canvas.height);
-		gl.clearColor(0.0, 0.0, 0.0, 0);
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		that.gl.viewport(0, 0, canvas.width, canvas.height);
+		that.gl.clearColor(0.0, 0.0, 0.0, 0);
+		that.gl.clear(that.gl.COLOR_BUFFER_BIT | that.gl.DEPTH_BUFFER_BIT);
 		spriteSystem.draw(that, 0);
 		lastTime = now;
 	}
@@ -246,7 +242,8 @@ SpriteAnim.prototype.webgl = function(spriteObj) {
 		getWindowSize();
 		canvas.width = 200;//browserWidth;
 		canvas.height = 200;//browserHeight;
-		spriteSystem.setScreenSize(200, 200);
+		spriteSystem.screenWidth_ = 200;
+		spriteSystem.screenHeight_ = 200;
 	}
 }
 SpriteAnim.prototype.webgl_support = function(canvas) {
@@ -280,7 +277,7 @@ SpriteAnim.prototype.create3DContext = function(canvas, opt_attribs) {
 		}
 	}
 	if (context) {
-		gl = context;
+		this.gl = context;
 		if (!canvas.tdl) {
 			canvas.tdl = {};
 		}
@@ -300,7 +297,7 @@ SpriteAnim.prototype.create3DContext = function(canvas, opt_attribs) {
 SpriteAnim.prototype.getExtensionWithKnownPrefixes = function(name) {
 	for (var ii = 0; ii < this.browserPrefixes_.length; ++ii) {
 		var prefixedName = this.browserPrefixes_[ii] + name;
-		var ext = gl.getExtension(prefixedName);
+		var ext = this.gl.getExtension(prefixedName);
 		if (ext) {
 			return ext;
 		}
@@ -342,15 +339,15 @@ SpriteAnim.prototype.startLoading = function() {
 };
 
 SpriteAnim.prototype.spriteSheetLoaded_ = function(sheet, image, params) {
-	var texture = gl.createTexture();
-	gl.bindTexture(gl.TEXTURE_2D, texture);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+	var texture = this.gl.createTexture();
+	this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+	this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+	this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+	this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+	this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+	this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
 
-	sheet.initialize(this.currentTextureUnit_, image.width, image.height);
+	sheet.spriteSheetInitialize(this.currentTextureUnit_, image.width, image.height);
 	this.textures_[this.currentTextureUnit_] = texture;
 	++this.currentTextureUnit_;
 
@@ -378,15 +375,15 @@ SpriteAnim.prototype.spriteSheetStartLoading = function() {
 	image.src = this.params_.url;
 };
 
-SpriteAnim.prototype.initialize = function(textureUnit, width, height) {
+SpriteAnim.prototype.spriteSheetInitialize = function(textureUnit, width, height) {
 	this.textureUnit_ = textureUnit;
 	this.textureWidth_ = width;
 	this.textureHeight_ = height;
 };
 
-SpriteAnim.prototype.createSprite = function(system) {
-	var screenWidth = system.screenWidth();
-	var screenHeight = system.screenHeight();
+SpriteAnim.prototype.spriteSheetCreateSprite = function(system) {
+	var screenWidth = this.screenWidth_;;
+	var screenHeight = this.screenHeight_;;
 	// Position the sprite at a random position
 	var centerX = Math.random() * screenWidth;
 	var centerY = Math.random() * screenHeight;
@@ -424,14 +421,67 @@ SpriteAnim.prototype.onload_ = function() {
 // "options" is a JavaScript object containing key/value pairs. The
 // current options the sprite system watches for are:
 //   slow: [true|false]   Whether to use the legacy bandwidth-intensive shader for comparison purposes.
-function SpriteSystem(options) {
-	SpriteSystem.initialize_();
+function SpriteSystem(options,gl) {
+	// These offsets are in units of floating-point numbers.
+	this.gl = gl;
+	this.constantAttributeInfo_ = [
+		{ size: 1, offset: 0 }, // Rotation
+		{ size: 1, offset: 0 }, // Per-sprite frame offset
+		{ size: 1, offset: 0 }, // Sprite size
+		{ size: 2, offset: 0 }, // Corner offset
+		{ size: 2, offset: 0 }, // Sprite texture size
+		{ size: 1, offset: 0 }, // Sprites per row
+		{ size: 1, offset: 0 }, // Num frames
+		{ size: 4, offset: 0 }  // Texture weights
+	];
+	this.initialize_ = function() {
+		if (this.initialized_)
+			return;
+		var constantAttributeInfo = this.constantAttributeInfo_;
+		var cumulativeOffset = 0;
+		for (var ii = 0; ii < constantAttributeInfo.length; ++ii) {
+			constantAttributeInfo[ii].offset = cumulativeOffset;
+			cumulativeOffset += constantAttributeInfo[ii].size;
+		}
+		this.constantAttributeStride_ = cumulativeOffset;  
+		SpriteSystem.initialized_ = true;
+	};
+	this.constantAttributeStride_ = 0;
+
+	this.ROTATION_INDEX = 0;
+	this.PER_SPRITE_FRAME_OFFSET_INDEX = 1;
+	this.SPRITE_SIZE_INDEX = 2;
+	this.CORNER_OFFSET_INDEX = 3;
+	this.SPRITE_TEXTURE_SIZE_INDEX = 4;
+	this.SPRITES_PER_ROW_INDEX = 5;
+	this.NUM_FRAMES_INDEX = 6;
+	this.TEXTURE_WEIGHTS_INDEX = 7;
+
+	this.initialize_();
 	this.options = options;
-	this.dumpOffsets();
 	this.loadProgram_(options);
 	this.frameOffset_ = 0;
-	this.spriteBuffer_ = gl.createBuffer();
+	this.spriteBuffer_ = this.gl.createBuffer();
 	this.clearAllSprites();
+
+	this.offsets_ = [
+		[-0.5, -0.5],
+		[-0.5,  0.5],
+		[ 0.5, -0.5],
+		[ 0.5, -0.5],
+		[-0.5,  0.5],
+		[ 0.5,  0.5]
+	];
+
+	this.initialized_ = false;
+	
+}
+SpriteSystem.prototype.loadShader = function(shaderSource, shaderType) {
+	var shader = this.gl.createShader(shaderType);
+	this.gl.shaderSource(shader, shaderSource);
+	this.gl.compileShader(shader);
+	var compiled = this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS);
+	return shader;
 }
 
 SpriteSystem.prototype.clearAllSprites = function() {
@@ -445,37 +495,37 @@ SpriteSystem.prototype.clearAllSprites = function() {
 
 SpriteSystem.prototype.loadProgram_ = function(options) {
 	var fragmentShaderName = (options && options['slow']) ? 'slowSpriteFragmentShader' : 'spriteFragmentShader';
-	var vertexShader = loadShader(document.getElementById('spriteVertexShader').text, gl.VERTEX_SHADER);
-	var fragmentShader = loadShader(document.getElementById(fragmentShaderName).text, gl.FRAGMENT_SHADER);
-	var program = gl.createProgram();
-	gl.attachShader(program, vertexShader);
-	gl.attachShader(program, fragmentShader);
-	gl.linkProgram(program);
-	var linked = gl.getProgramParameter(program, gl.LINK_STATUS);
-	gl.deleteShader(vertexShader);
-	gl.deleteShader(fragmentShader);
+	var vertexShader = this.loadShader(document.getElementById('spriteVertexShader').text, this.gl.VERTEX_SHADER);
+	var fragmentShader = this.loadShader(document.getElementById(fragmentShaderName).text, this.gl.FRAGMENT_SHADER);
+	var program = this.gl.createProgram();
+	this.gl.attachShader(program, vertexShader);
+	this.gl.attachShader(program, fragmentShader);
+	this.gl.linkProgram(program);
+	var linked = this.gl.getProgramParameter(program, this.gl.LINK_STATUS);
+	this.gl.deleteShader(vertexShader);
+	this.gl.deleteShader(fragmentShader);
 	this.program_ = program;
 
-	this.frameOffsetLoc_ = gl.getUniformLocation(program, "u_frameOffset");
-	this.screenDimsLoc_ = gl.getUniformLocation(program, "u_screenDims");
+	this.frameOffsetLoc_ = this.gl.getUniformLocation(program, "u_frameOffset");
+	this.screenDimsLoc_ = this.gl.getUniformLocation(program, "u_screenDims");
 
-	this.centerPositionLoc_ = gl.getAttribLocation(program, "centerPosition");
-	this.rotationLoc_ = gl.getAttribLocation(program, "rotation");
-	this.perSpriteFrameOffsetLoc_ = gl.getAttribLocation(program, "perSpriteFrameOffset");
-	this.spriteSizeLoc_ = gl.getAttribLocation(program, "spriteSize");
-	this.cornerOffsetLoc_ = gl.getAttribLocation(program, "cornerOffset");
-	this.spriteTextureSizeLoc_ = gl.getAttribLocation(program, "spriteTextureSize");
-	this.spritesPerRowLoc_ = gl.getAttribLocation(program, "spritesPerRow");
-	this.numFramesLoc_ = gl.getAttribLocation(program, "numFrames");
-	this.textureWeightsLoc_ = gl.getAttribLocation(program, "textureWeights");
+	this.centerPositionLoc_ = this.gl.getAttribLocation(program, "centerPosition");
+	this.rotationLoc_ = this.gl.getAttribLocation(program, "rotation");
+	this.perSpriteFrameOffsetLoc_ = this.gl.getAttribLocation(program, "perSpriteFrameOffset");
+	this.spriteSizeLoc_ = this.gl.getAttribLocation(program, "spriteSize");
+	this.cornerOffsetLoc_ = this.gl.getAttribLocation(program, "cornerOffset");
+	this.spriteTextureSizeLoc_ = this.gl.getAttribLocation(program, "spriteTextureSize");
+	this.spritesPerRowLoc_ = this.gl.getAttribLocation(program, "spritesPerRow");
+	this.numFramesLoc_ = this.gl.getAttribLocation(program, "numFrames");
+	this.textureWeightsLoc_ = this.gl.getAttribLocation(program, "textureWeights");
 
-	this.texture0Loc_ = gl.getUniformLocation(program, "u_texture0");
-	this.texture1Loc_ = gl.getUniformLocation(program, "u_texture1");
-	this.texture2Loc_ = gl.getUniformLocation(program, "u_texture2");
-	this.texture3Loc_ = gl.getUniformLocation(program, "u_texture3");
+	this.texture0Loc_ = this.gl.getUniformLocation(program, "u_texture0");
+	this.texture1Loc_ = this.gl.getUniformLocation(program, "u_texture1");
+	this.texture2Loc_ = this.gl.getUniformLocation(program, "u_texture2");
+	this.texture3Loc_ = this.gl.getUniformLocation(program, "u_texture3");
 };
 
-	SpriteSystem.prototype.resizeCapacity_ = function(capacity, preserveOldContents) {
+SpriteSystem.prototype.resizeCapacity_ = function(capacity, preserveOldContents) {
 	// Capacity is actually specified in vertices.
 	var oldPositionData = null;
 	var oldConstantData = null;
@@ -492,21 +542,21 @@ SpriteSystem.prototype.loadProgram_ = function(options) {
 
 	this.capacity_ = capacity;
 	this.positionData_ = new Float32Array(2 * capacity);
-	this.constantData_ = new Float32Array(SpriteSystem.constantAttributeStride_ * capacity);
+	this.constantData_ = new Float32Array(this.constantAttributeStride_ * capacity);
 	this.startPositionData_ = new Array(2 * capacity);
 	this.velocityData_ = new Array(2 * capacity);
 	this.spriteSizeData_ = new Array(capacity);
 
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteBuffer_);
-	gl.bufferData(gl.ARRAY_BUFFER,
+	this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.spriteBuffer_);
+	this.gl.bufferData(this.gl.ARRAY_BUFFER,
 		Float32Array.BYTES_PER_ELEMENT * (this.positionData_.length + this.constantData_.length),
-		gl.DYNAMIC_DRAW);
+		this.gl.DYNAMIC_DRAW);
 
 	if (preserveOldContents) {
 		this.positionData_.set(oldPositionData);
 		this.constantData_.set(oldConstantData);
-		gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.positionData_);
-		gl.bufferSubData(gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * this.positionData_.length, this.constantData_);
+		this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.positionData_);
+		this.gl.bufferSubData(this.gl.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * this.positionData_.length, this.constantData_);
 
 		for (var ii = 0; ii < oldStartPositionData.length; ++ii) {
 			this.startPositionData_[ii] = oldStartPositionData[ii];
@@ -520,74 +570,10 @@ SpriteSystem.prototype.loadProgram_ = function(options) {
 	}
 };
 
-// These offsets are in units of floating-point numbers.
-SpriteSystem.constantAttributeInfo_ = [
-	{ size: 1, offset: 0 }, // Rotation
-	{ size: 1, offset: 0 }, // Per-sprite frame offset
-	{ size: 1, offset: 0 }, // Sprite size
-	{ size: 2, offset: 0 }, // Corner offset
-	{ size: 2, offset: 0 }, // Sprite texture size
-	{ size: 1, offset: 0 }, // Sprites per row
-	{ size: 1, offset: 0 }, // Num frames
-	{ size: 4, offset: 0 }  // Texture weights
-];
-SpriteSystem.constantAttributeStride_ = 0;
 
-SpriteSystem.ROTATION_INDEX = 0;
-SpriteSystem.PER_SPRITE_FRAME_OFFSET_INDEX = 1;
-SpriteSystem.SPRITE_SIZE_INDEX = 2;
-SpriteSystem.CORNER_OFFSET_INDEX = 3;
-SpriteSystem.SPRITE_TEXTURE_SIZE_INDEX = 4;
-SpriteSystem.SPRITES_PER_ROW_INDEX = 5;
-SpriteSystem.NUM_FRAMES_INDEX = 6;
-SpriteSystem.TEXTURE_WEIGHTS_INDEX = 7;
 
-SpriteSystem.offsetForIndex = function(index) {
-	return SpriteSystem.constantAttributeInfo_[index].offset;
-};
 
-SpriteSystem.initialized_ = false;
 
-SpriteSystem.initialize_ = function() {
-	if (SpriteSystem.initialized_)
-		return;
-	var constantAttributeInfo = SpriteSystem.constantAttributeInfo_;
-	var cumulativeOffset = 0;
-	for (var ii = 0; ii < constantAttributeInfo.length; ++ii) {
-		constantAttributeInfo[ii].offset = cumulativeOffset;
-		cumulativeOffset += constantAttributeInfo[ii].size;
-	}
-	SpriteSystem.constantAttributeStride_ = cumulativeOffset;  
-	SpriteSystem.initialized_ = true;
-};
-
-SpriteSystem.prototype.dumpOffsets = function() {
-	var constantAttributeInfo = SpriteSystem.constantAttributeInfo_;
-	for (var ii = 0; ii < constantAttributeInfo.length; ++ii) {
-	}
-};
-
-SpriteSystem.offsets_ = [
-	[-0.5, -0.5],
-	[-0.5,  0.5],
-	[ 0.5, -0.5],
-	[ 0.5, -0.5],
-	[-0.5,  0.5],
-	[ 0.5,  0.5]
-];
-
-SpriteSystem.prototype.setScreenSize = function(width, height) {
-	this.screenWidth_ = width;
-	this.screenHeight_ = height;
-};
-
-SpriteSystem.prototype.screenWidth = function() {
-	return this.screenWidth_;
-};
-
-SpriteSystem.prototype.screenHeight = function() {
-	return this.screenHeight_;
-};
 
 SpriteSystem.prototype.addSprite = function(centerX, centerY,
 	rotation,
@@ -598,7 +584,7 @@ SpriteSystem.prototype.addSprite = function(centerX, centerY,
 	spritesPerRow,
 	numFrames,
 	textureWeights) {
-	var offsets = SpriteSystem.offsets_;
+	var offsets = this.offsets_;
 	for (var ii = 0; ii < offsets.length; ++ii) {
 		this.addVertex_(centerX, centerY,
 			rotation,
@@ -617,20 +603,20 @@ SpriteSystem.prototype.setupConstantLoc_ = function(location, index) {
 	if (location == -1)
 	return; // Debugging
 	var baseOffset = Float32Array.BYTES_PER_ELEMENT * this.positionData_.length;
-	var constantStride = SpriteSystem.constantAttributeStride_;
-	var constantAttributeInfo = SpriteSystem.constantAttributeInfo_;
-	gl.enableVertexAttribArray(location);
-	gl.vertexAttribPointer(location,
-		constantAttributeInfo[index].size, gl.FLOAT, false,
+	var constantStride = this.constantAttributeStride_;
+	var constantAttributeInfo = this.constantAttributeInfo_;
+	this.gl.enableVertexAttribArray(location);
+	this.gl.vertexAttribPointer(location,
+		constantAttributeInfo[index].size, this.gl.FLOAT, false,
 		constantStride * Float32Array.BYTES_PER_ELEMENT,
 		baseOffset + Float32Array.BYTES_PER_ELEMENT * constantAttributeInfo[index].offset);
 };
 
 SpriteSystem.prototype.draw = function(atlas, deltaTime) {
-	gl.enable(gl.BLEND);
-	gl.disable(gl.DEPTH_TEST);
-	gl.disable(gl.CULL_FACE);
-	gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+	this.gl.enable(this.gl.BLEND);
+	this.gl.disable(this.gl.DEPTH_TEST);
+	this.gl.disable(this.gl.CULL_FACE);
+	this.gl.blendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
 	// Recompute all sprites' positions. Wrap around offscreen.
 	var numVertices = this.numVertices_;
 	for (var ii = 0; ii < numVertices; ++ii) {
@@ -657,32 +643,32 @@ SpriteSystem.prototype.draw = function(atlas, deltaTime) {
 	}
 
 	// Upload all sprites' positions.
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteBuffer_);
+	this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.spriteBuffer_);
 	if (!this.precisePositionView_ || this.precisePositionView_.length != 2 * numVertices) {
 		this.precisePositionView_ = this.positionData_.subarray(0, 2 * numVertices);
 	}
-	gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.precisePositionView_);
+	this.gl.bufferSubData(this.gl.ARRAY_BUFFER, 0, this.precisePositionView_);
 
 	// Bind all textures.
 	for (var ii = 0; ii < atlas.currentTextureUnit_; ++ii) {
-		gl.activeTexture(gl.TEXTURE0 + ii);
-		gl.bindTexture(gl.TEXTURE_2D, atlas.textures_[ii]);
+		this.gl.activeTexture(this.gl.TEXTURE0 + ii);
+		this.gl.bindTexture(this.gl.TEXTURE_2D, atlas.textures_[ii]);
 	}
 
 	// Prepare to draw.
-	gl.useProgram(this.program_);
+	this.gl.useProgram(this.program_);
 
 	// Set up streams.
-	gl.enableVertexAttribArray(this.centerPositionLoc_);
-	gl.vertexAttribPointer(this.centerPositionLoc_, 2, gl.FLOAT, false, 0, 0);
-	this.setupConstantLoc_(this.rotationLoc_, SpriteSystem.ROTATION_INDEX);
-	this.setupConstantLoc_(this.perSpriteFrameOffsetLoc_, SpriteSystem.PER_SPRITE_FRAME_OFFSET_INDEX);
-	this.setupConstantLoc_(this.spriteSizeLoc_, SpriteSystem.SPRITE_SIZE_INDEX);
-	this.setupConstantLoc_(this.cornerOffsetLoc_, SpriteSystem.CORNER_OFFSET_INDEX);
-	this.setupConstantLoc_(this.spriteTextureSizeLoc_, SpriteSystem.SPRITE_TEXTURE_SIZE_INDEX);
-	this.setupConstantLoc_(this.spritesPerRowLoc_, SpriteSystem.SPRITES_PER_ROW_INDEX);
-	this.setupConstantLoc_(this.numFramesLoc_, SpriteSystem.NUM_FRAMES_INDEX);
-	this.setupConstantLoc_(this.textureWeightsLoc_, SpriteSystem.TEXTURE_WEIGHTS_INDEX);
+	this.gl.enableVertexAttribArray(this.centerPositionLoc_);
+	this.gl.vertexAttribPointer(this.centerPositionLoc_, 2, this.gl.FLOAT, false, 0, 0);
+	this.setupConstantLoc_(this.rotationLoc_, this.ROTATION_INDEX);
+	this.setupConstantLoc_(this.perSpriteFrameOffsetLoc_, this.PER_SPRITE_FRAME_OFFSET_INDEX);
+	this.setupConstantLoc_(this.spriteSizeLoc_, this.SPRITE_SIZE_INDEX);
+	this.setupConstantLoc_(this.cornerOffsetLoc_, this.CORNER_OFFSET_INDEX);
+	this.setupConstantLoc_(this.spriteTextureSizeLoc_, this.SPRITE_TEXTURE_SIZE_INDEX);
+	this.setupConstantLoc_(this.spritesPerRowLoc_, this.SPRITES_PER_ROW_INDEX);
+	this.setupConstantLoc_(this.numFramesLoc_, this.NUM_FRAMES_INDEX);
+	this.setupConstantLoc_(this.textureWeightsLoc_, this.TEXTURE_WEIGHTS_INDEX);
 
 	if(this.frameOffset_ == 0) {
 		if(this.options.onStart) {
@@ -698,20 +684,20 @@ SpriteSystem.prototype.draw = function(atlas, deltaTime) {
 	}
 
 	// Set up uniforms.
-	gl.uniform1f(this.frameOffsetLoc_, this.frameOffset_++);
-	gl.uniform4f(this.screenDimsLoc_,
+	this.gl.uniform1f(this.frameOffsetLoc_, this.frameOffset_++);
+	this.gl.uniform4f(this.screenDimsLoc_,
 		2.0 / this.screenWidth_,
 		-2.0 / this.screenHeight_,
 		-1.0,
 		1.0);
 	// FIXME: query atlas for the number of textures.
-	gl.uniform1i(this.texture0Loc_, 0);
-	gl.uniform1i(this.texture1Loc_, 1);
-	gl.uniform1i(this.texture2Loc_, 2);
-	gl.uniform1i(this.texture3Loc_, 3);
+	this.gl.uniform1i(this.texture0Loc_, 0);
+	this.gl.uniform1i(this.texture1Loc_, 1);
+	this.gl.uniform1i(this.texture2Loc_, 2);
+	this.gl.uniform1i(this.texture3Loc_, 3);
 
 	// Do the draw call.
-	gl.drawArrays(gl.TRIANGLES, 0, this.numVertices_);
+	this.gl.drawArrays(this.gl.TRIANGLES, 0, this.numVertices_);
 };
 
 SpriteSystem.prototype.addVertex_ = function(centerX, centerY,
@@ -740,34 +726,27 @@ SpriteSystem.prototype.addVertex_ = function(centerX, centerY,
 	this.spriteSizeData_[vertexIndex] = spriteSize;
 
 	// Base index into the constant data
-	var baseIndex = SpriteSystem.constantAttributeStride_ * vertexIndex;
-	this.constantData_[baseIndex + SpriteSystem.offsetForIndex(SpriteSystem.ROTATION_INDEX)] = rotation;
-	this.constantData_[baseIndex + SpriteSystem.offsetForIndex(SpriteSystem.PER_SPRITE_FRAME_OFFSET_INDEX)] = perSpriteFrameOffset;
-	this.constantData_[baseIndex + SpriteSystem.offsetForIndex(SpriteSystem.SPRITE_SIZE_INDEX)] = spriteSize;
-	this.constantData_[baseIndex + SpriteSystem.offsetForIndex(SpriteSystem.CORNER_OFFSET_INDEX)    ] = cornerOffsetX;
-	this.constantData_[baseIndex + SpriteSystem.offsetForIndex(SpriteSystem.CORNER_OFFSET_INDEX) + 1] = cornerOffsetY;
-	this.constantData_[baseIndex + SpriteSystem.offsetForIndex(SpriteSystem.SPRITE_TEXTURE_SIZE_INDEX)    ] = spriteTextureSizeX;
-	this.constantData_[baseIndex + SpriteSystem.offsetForIndex(SpriteSystem.SPRITE_TEXTURE_SIZE_INDEX) + 1] = spriteTextureSizeY;
-	this.constantData_[baseIndex + SpriteSystem.offsetForIndex(SpriteSystem.SPRITES_PER_ROW_INDEX)] = spritesPerRow;
-	this.constantData_[baseIndex + SpriteSystem.offsetForIndex(SpriteSystem.NUM_FRAMES_INDEX)] = numFrames;
-	this.constantData_[baseIndex + SpriteSystem.offsetForIndex(SpriteSystem.TEXTURE_WEIGHTS_INDEX)    ] = textureWeights[0];
-	this.constantData_[baseIndex + SpriteSystem.offsetForIndex(SpriteSystem.TEXTURE_WEIGHTS_INDEX) + 1] = textureWeights[1];
-	this.constantData_[baseIndex + SpriteSystem.offsetForIndex(SpriteSystem.TEXTURE_WEIGHTS_INDEX) + 2] = textureWeights[2];
-	this.constantData_[baseIndex + SpriteSystem.offsetForIndex(SpriteSystem.TEXTURE_WEIGHTS_INDEX) + 3] = textureWeights[3];
+	var baseIndex = this.constantAttributeStride_ * vertexIndex;
+	this.constantData_[baseIndex + this.constantAttributeInfo_[this.ROTATION_INDEX].offset] = rotation;
+	this.constantData_[baseIndex + this.constantAttributeInfo_[this.PER_SPRITE_FRAME_OFFSET_INDEX].offset] = perSpriteFrameOffset;
+	this.constantData_[baseIndex + this.constantAttributeInfo_[this.SPRITE_SIZE_INDEX].offset] = spriteSize;
+	this.constantData_[baseIndex + this.constantAttributeInfo_[this.CORNER_OFFSET_INDEX].offset] = cornerOffsetX;
+	this.constantData_[baseIndex + this.constantAttributeInfo_[this.CORNER_OFFSET_INDEX].offset + 1] = cornerOffsetY;
+	this.constantData_[baseIndex + this.constantAttributeInfo_[this.SPRITE_TEXTURE_SIZE_INDEX].offset] = spriteTextureSizeX;
+	this.constantData_[baseIndex + this.constantAttributeInfo_[this.SPRITE_TEXTURE_SIZE_INDEX].offset + 1] = spriteTextureSizeY;
+	this.constantData_[baseIndex + this.constantAttributeInfo_[this.SPRITES_PER_ROW_INDEX].offset] = spritesPerRow;
+	this.constantData_[baseIndex + this.constantAttributeInfo_[this.NUM_FRAMES_INDEX].offset] = numFrames;
+	this.constantData_[baseIndex + this.constantAttributeInfo_[this.TEXTURE_WEIGHTS_INDEX].offset] = textureWeights[0];
+	this.constantData_[baseIndex + this.constantAttributeInfo_[this.TEXTURE_WEIGHTS_INDEX].offset + 1] = textureWeights[1];
+	this.constantData_[baseIndex + this.constantAttributeInfo_[this.TEXTURE_WEIGHTS_INDEX].offset + 2] = textureWeights[2];
+	this.constantData_[baseIndex + this.constantAttributeInfo_[this.TEXTURE_WEIGHTS_INDEX].offset + 3] = textureWeights[3];
 
 	// Upload the changes to the constant data immediately, since we
 	// won't touch it again.
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.spriteBuffer_);
-	gl.bufferSubData(gl.ARRAY_BUFFER,
+	this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.spriteBuffer_);
+	this.gl.bufferSubData(this.gl.ARRAY_BUFFER,
 		Float32Array.BYTES_PER_ELEMENT * (this.positionData_.length + baseIndex),
-		this.constantData_.subarray(baseIndex, baseIndex + SpriteSystem.constantAttributeStride_));
+		this.constantData_.subarray(baseIndex, baseIndex + this.constantAttributeStride_));
 };
 
 
-function loadShader(shaderSource, shaderType) {
-	var shader = gl.createShader(shaderType);
-	gl.shaderSource(shader, shaderSource);
-	gl.compileShader(shader);
-	var compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-	return shader;
-}
