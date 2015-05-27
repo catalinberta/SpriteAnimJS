@@ -4,128 +4,108 @@
 	<title>Examples of SpriteAnimJS</title>
 </head>
 <body id="body" onload="">
-	<div class="fpsContainer" style="display: none" id="fpsContainer">
-  <div class="fps">fps: <span id="fps">37</span></div>
-  <div id="topUI">
-  <div>Number of Sprites</div>
-  <div style="cursor: pointer; color: gray;">500</div><div style="cursor: pointer; color: gray;">1000</div><div style="cursor: pointer; color: gray;">1500</div><div style="cursor: pointer; color: red;">2000</div><div style="cursor: pointer; color: gray;">2500</div><div style="cursor: pointer; color: gray;">3000</div><div style="cursor: pointer; color: gray;">4000</div><div style="cursor: pointer; color: gray;">5000</div><div style="cursor: pointer; color: gray;">10000</div></div>
-    <div><a href="readme.html" style="color: #FFFFFF;">More info...</a></div>
-</div>
 	<canvas id="canvas" style="opacity: 0.1"></canvas>
-  <canvas id="canvas2" style="opacity: 0.1"></canvas>
+	<canvas id="canvas2" style="opacity: 0.1"></canvas>
 	<script type="text/javascript" src="https://code.createjs.com/preloadjs-0.6.0.min.js"></script>
 	<script type="text/javascript" src="../dist/spriteanim-1.0.js"></script>
-	
-	<script id="spriteVertexShader" type="text/webgl">
-uniform float u_frameOffset;
-uniform vec4 u_screenDims;
-attribute vec2 centerPosition;
-attribute float rotation;
-attribute float perSpriteFrameOffset;
-attribute float spriteSize;
-attribute vec2 cornerOffset;
-attribute vec2 spriteTextureSize;
-attribute float spritesPerRow;
-attribute float numFrames;
-attribute vec4 textureWeights;
-varying vec2 v_texCoord;
-varying vec4 v_textureWeights;
-void main() {
-  float frameNumber = mod(u_frameOffset + perSpriteFrameOffset, numFrames);
-  float row = floor(frameNumber / spritesPerRow);  // Compute the upper left texture coordinate of the sprite
-  vec2 upperLeftTC = vec2(spriteTextureSize.x * (frameNumber - (row * spritesPerRow)),
-                          spriteTextureSize.y * row);
-  vec2 tc = upperLeftTC + spriteTextureSize * (cornerOffset + vec2(0.5, 0.5));
-  v_texCoord = tc;
-  v_textureWeights = textureWeights;
-  float s = sin(rotation);
-  float c = cos(rotation);
-  mat2 rotMat = mat2(c, -s, s, c);
-  vec2 scaledOffset = spriteSize * cornerOffset;
-  vec2 pos = centerPosition + rotMat * scaledOffset;
-  gl_Position = vec4(pos * u_screenDims.xy + u_screenDims.zw, 0.0, 1.0);
-}
-</script>
-<script id="spriteFragmentShader" type="text/webgl">
-precision mediump float;
-uniform sampler2D u_texture0;
-uniform sampler2D u_texture1;
-uniform sampler2D u_texture2;
-uniform sampler2D u_texture3;
-varying vec2 v_texCoord;
-varying vec4 v_textureWeights;
-void main() {
-  vec4 color;
-  if (v_textureWeights.x > 0.0)
-    color = texture2D(u_texture0, v_texCoord);
-  else if (v_textureWeights.y > 0.0)
-    color = texture2D(u_texture1, v_texCoord);
-  else if (v_textureWeights.z > 0.0)
-    color = texture2D(u_texture2, v_texCoord);
-  else // v_textureWeights.w > 0.0
-    color = texture2D(u_texture3, v_texCoord);
-  gl_FragColor = color;
-}
-</script>	
-<script id="slowSpriteFragmentShader" type="text/something-not-javascript">
-precision mediump float;
-uniform sampler2D u_texture0;
-uniform sampler2D u_texture1;
-uniform sampler2D u_texture2;
-uniform sampler2D u_texture3;
-varying vec2 v_texCoord;
-varying vec4 v_textureWeights;
-void main() {
-  gl_FragColor = (texture2D(u_texture0, v_texCoord) * v_textureWeights.x +
-                  texture2D(u_texture1, v_texCoord) * v_textureWeights.y +
-                  texture2D(u_texture2, v_texCoord) * v_textureWeights.z +
-                  texture2D(u_texture3, v_texCoord) * v_textureWeights.w);
-}
-</script>
-	<script type="text/javascript">
 
-		var queue = new createjs.LoadQueue(true);
-	 	queue.loadManifest([
-	 		{id:"coin", src:"images/coin-sprite-animation.png"},
-	 		{id:"pig", src:"images/pig.jpg"},
-	 		{id:"explosion", src:"images/explosion.png"}
-	 	]);
-	 	queue.on("complete", handleComplete, this);
-	 	
-	 	function handleComplete() {
-			coin = new SpriteAnim("canvas");
-      coin2 = new SpriteAnim("canvas2");
-     
-			coin.start({
-				frameWidth: 100,
-				frameHeight: 100,
-				image: queue.getResult("coin"),
+<script id="spriteVertexShader" type="x-shader/x-vertex">
+	uniform float u_frameOffset;
+	uniform vec4 u_screenDims;
+	attribute vec2 centerPosition;
+	attribute float rotation;
+	attribute float perSpriteFrameOffset;
+	attribute float spriteSize;
+	attribute vec2 cornerOffset;
+	attribute vec2 spriteTextureSize;
+	attribute float spritesPerRow;
+	attribute float numFrames;
+	attribute vec4 textureWeights;
+	varying vec2 v_texCoord;
+	varying vec4 v_textureWeights;
+	void main() {
+		float frameNumber = mod(u_frameOffset + perSpriteFrameOffset, numFrames);
+		float row = floor(frameNumber / spritesPerRow);  // Compute the upper left texture coordinate of the sprite
+		vec2 upperLeftTC = vec2(spriteTextureSize.x * (frameNumber - (row * spritesPerRow)),
+							  spriteTextureSize.y * row);
+		vec2 tc = upperLeftTC + spriteTextureSize * (cornerOffset + vec2(0.5, 0.5));
+		v_texCoord = tc;
+		v_textureWeights = textureWeights;
+		float s = sin(rotation);
+		float c = cos(rotation);
+		mat2 rotMat = mat2(c, -s, s, c);
+		vec2 scaledOffset = spriteSize * cornerOffset;
+		vec2 pos = centerPosition + rotMat * scaledOffset;
+		gl_Position = vec4(pos * u_screenDims.xy + u_screenDims.zw, 0.0, 1.0);
+	}
+</script>
+<script id="spriteFragmentShader" type="x-shader/x-fragment">
+	precision mediump float;
+	uniform sampler2D u_texture0;
+	uniform sampler2D u_texture1;
+	uniform sampler2D u_texture2;
+	uniform sampler2D u_texture3;
+	varying vec2 v_texCoord;
+	varying vec4 v_textureWeights;
+	void main() {
+		vec4 color;
+		if (v_textureWeights.x > 0.0)
+			color = texture2D(u_texture0, v_texCoord);
+		else if (v_textureWeights.y > 0.0)
+			color = texture2D(u_texture1, v_texCoord);
+		else if (v_textureWeights.z > 0.0)
+			color = texture2D(u_texture2, v_texCoord);
+		else // v_textureWeights.w > 0.0
+			color = texture2D(u_texture3, v_texCoord);
+		gl_FragColor = color;
+	}
+</script>   
+
+<script type="text/javascript">
+	var queue = new createjs.LoadQueue(true);
+	queue.loadManifest([
+		{id:"coin", src:"images/coin-sprite-animation.png"},
+		{id:"pig", src:"images/pig.jpg"},
+		{id:"explosion", src:"images/explosion.png"}
+	]);
+	queue.on("complete", handleComplete, this);
+
+	function handleComplete() {
+		coin = new SpriteAnim("canvas");
+		coin2 = new SpriteAnim("canvas2");
+
+		coin.start({
+			frameWidth: 100,
+			frameHeight: 100,
+			image: queue.getResult("coin"),
+			fps: 8,
+			className: 'yellow',
+		onStart: function() {
+			console.log('Starting1...')
+		},
+		onComplete: function() {
+			console.log('Ending1...')
+		},
+			loop: false
+		}); 
+
+		setTimeout(function() {
+			coin2.start({
+				frameWidth: 200,
+				frameHeight: 200,
+				image: queue.getResult("explosion"),
 				fps: 8,
 				className: 'yellow',
-        onStart: function() {
-          console.log('Starting1...')
-        },
-        onComplete: function() {
-          console.log('Ending1...')
-        },
+				onStart: function() {
+				  console.log('Starting2...')
+				},
+				onComplete: function() {
+				  console.log('Ending2...')
+				},
 				loop: false
-			});			
-      coin2.start({
-        frameWidth: 200,
-        frameHeight: 200,
-        image: queue.getResult("explosion"),
-        fps: 8,
-        className: 'yellow',
-        onStart: function() {
-          console.log('Starting2...')
-        },
-        onComplete: function() {
-          console.log('Ending2...')
-        },
-        loop: false
-      });   
-	 	}
-
-	</script>
+			});  
+		},500)
+	}
+</script>
 </body>
 </html>
