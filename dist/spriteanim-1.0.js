@@ -26,20 +26,21 @@ SpriteAnim.prototype.start = function(spriteObj) {
 		}
 	}
 
-	// If support for WebGL is enabled, jump to webgl section
-	if(this.webgl_support(this.canvas)) {
-		this.webgl(spriteObj);
-		return;
-	}
-
-	
-	this.canvas.width = this.spriteObj.frameWidth; // Set canvas width
-	this.canvas.height = this.spriteObj.frameHeight; // Set canvas width
-
 	// Sprite Info
-	this.width = this.spriteObj.image.width; // Sprite total width
-	this.height = this.spriteObj.image.height; // Sprite total height
+	this.width = this.spriteObj.frameWidth; // Set canvas width
+	this.height = this.spriteObj.frameHeight; // Set canvas width
+	this.totalWidth = this.spriteObj.image.width; // Sprite total width
+	this.totalHeight = this.spriteObj.image.height; // Sprite total height
 	this.image = this.spriteObj.image; // Sprite image
+
+	this.canvas.width = this.width; // Set canvas width
+	this.canvas.height = this.height; // Set canvas width
+
+	// Frame stuff
+	this.horizontalframeIndex = 0; // Frame index
+	this.verticalFrameIndex = 0;
+	this.horizontalFrames = (this.totalWidth / spriteObj.frameWidth) || 1; // Horizontal frames
+	this.verticalFrames = (this.totalHeight / spriteObj.frameHeight) || 1; // Vertical frames
 
 	// FPS stuff
 	this.fps = this.spriteObj.fps;
@@ -47,21 +48,21 @@ SpriteAnim.prototype.start = function(spriteObj) {
 	this.interval = 1000 / this.fps; // Frame's interval in ms 
 	this.timestamp_now, this.delta; // Vars
 	
-	// Frame stuff
-	this.horizontalframeIndex = 0; // Frame index
-	this.verticalFrameIndex = 0;
-	this.horizontalFrames = (this.width / spriteObj.frameWidth) || 1; // Horizontal frames
-	this.verticalFrames = (this.height / spriteObj.frameHeight) || 1; // Vertical frames
-
 	this.loopSprite = this.spriteObj.loop || false; // If should loop boolean
 	this.playSprite = true; // Play state boolean
+
+	// If support for WebGL is enabled, jump to webgl section
+	if(this.webgl_support(this.canvas)) {
+		this.webgl(spriteObj);
+		return;
+	}
 
 	this.canvasTicker(); // Start ticker
 }
 // Stop method
 SpriteAnim.prototype.stop = function() {
 	this.playSprite = false;
-	this.context.clearRect(0, 0, this.width, this.height);
+	this.context.clearRect(0, 0, this.totalWidth, this.totalHeight);
 }
 // New tick update
 SpriteAnim.prototype.canvasUpdate = function () {
@@ -99,49 +100,22 @@ SpriteAnim.prototype.onComplete = function() {
 };
 // Draw new frame
 SpriteAnim.prototype.draw = function() {
-	this.context.clearRect(0, 0, this.width, this.height);
+	this.context.clearRect(0, 0, this.totalWidth, this.totalHeight);
 	this.context.drawImage(
 		this.image,
-		(this.horizontalframeIndex-1) * this.width / this.horizontalFrames,
-		(this.verticalFrameIndex-1) * this.height / this.verticalFrames,
-		this.width / this.horizontalFrames,
-		this.height,
+		(this.horizontalframeIndex-1) * this.totalWidth / this.horizontalFrames,
+		(this.verticalFrameIndex-1) * this.totalHeight / this.verticalFrames,
+		this.totalWidth / this.horizontalFrames,
+		this.totalHeight,
 		0,
 		0,
-		this.width / this.horizontalFrames,
-		this.height);
-};
-SpriteAnim.prototype.requestAnimationFrame = function(callback, element) {
-	if (!this.requestAnimationFrameImpl_) {
-		this.requestAnimationFrameImpl_ = function() {
-			var functionNames = [
-				"requestAnimationFrame",
-				"webkitRequestAnimationFrame",
-				"mozRequestAnimationFrame",
-				"oRequestAnimationFrame",
-				"msRequestAnimationFrame"
-			];
-			for (var jj = 0; jj < functionNames.length; ++jj) {
-				var functionName = functionNames[jj];
-				if (window[functionName]) {
-		 			return function(name) {
-					  	return function(callback, element) {
-					  		return window[name].call(window, callback, element);
-					  	};
-		  			}(functionName);
-				}
-			}
-			return function(callback, element) {
-				return window.setTimeout(callback, 1000 / 70);
-			};
-		}();
-	}
-	return this.requestAnimationFrameImpl_(callback, element);
+		this.totalWidth / this.horizontalFrames,
+		this.totalHeight);
 };
 // Ticker
 SpriteAnim.prototype.canvasTicker = function() {
 	if(this.playSprite) {
-		this.requestAnimationFrame(this.canvasTicker.bind(this));
+		window.requestAnimationFrame(this.canvasTicker.bind(this));
 		this.timestamp_now = Date.now();
 		this.delta = this.timestamp_now - this.timestamp_init;
 		if (this.delta > this.interval) {
@@ -217,21 +191,16 @@ SpriteAnim.prototype.webgl = function(spriteObj) {
 	];
 
 	this.initialized_ = false;
-
-	this.canvas.width = 200;//browserWidth;
-	this.canvas.height = 200;//browserHeight;
-	this.screenWidth_ = 200;
-	this.screenHeight_ = 200;
+	this.screenWidth_ = this.totalWidth;
+	this.screenHeight_ = this.totalHeight;
 
 	lastTime = new Date().getTime() * 0.001;
-
+	console.log(this)
 	this.onload = start;
-
 	//addSpriteSheet
 	this.name_ = 'boom';
-	this.params_ = {url: 'images/explosion.png', frames: 59,
-		spritesPerRow: 8,
-		width: 256, height: 256};
+	console.log(this.horizontalFrames*this.verticalFrames)
+	this.params_ = {frames: this.horizontalFrames*this.verticalFrames, spritesPerRow: this.horizontalFrames, width: this.width, height: this.height};
 	this.textureUnit_ = 0;
 	this.perSpriteFrameOffset_ = 0;
 	this.spriteSheets_.push(this);
@@ -241,40 +210,20 @@ SpriteAnim.prototype.webgl = function(spriteObj) {
 		this.spriteSheetCreateSprite();
 		render();
 	}
-
 	function render() {
-		this.requestAnimationFrame(render, this.canvas);
-		var now = new Date().getTime() * 0.001;
-		var deltaT = now - lastTime;
-		that.context.viewport(0, 0, this.canvas.width, this.canvas.height);
-		that.context.clearColor(0.0, 0.0, 0.0, 0);
-		that.context.clear(that.context.COLOR_BUFFER_BIT | that.context.DEPTH_BUFFER_BIT);
-		that.sysDraw(0);
-		lastTime = now;
-	}
-
-
-		var width = 0;
-		var height = 0;
-
-		if (typeof(window.innerWidth) == 'number') {
-			width = window.innerWidth;
-			height = window.innerHeight;
-		} else if (window.document.documentElement &&
-			(window.document.documentElement.clientWidth ||
-				window.document.documentElement.clientHeight)) {
-			width = window.document.documentElement.clientWidth;
-			height = window.document.documentElement.clientHeight;
-		} else if (window.document.body &&
-			(window.document.body.clientWidth ||
-				window.document.body.clientHeight)) {
-			width = window.document.body.clientWidth;
-			height = window.document.body.clientHeight;
+		if(that.playSprite) {
+			window.requestAnimationFrame(render, that.canvas);
+			that.timestamp_now = Date.now();
+			that.delta = that.timestamp_now - that.timestamp_init;
+			if (that.delta > that.interval) {
+				that.context.viewport(0, 0, that.width, that.height);
+				that.context.clearColor(0.0, 0.0, 0.0, 0);
+				that.context.clear(that.context.COLOR_BUFFER_BIT | that.context.DEPTH_BUFFER_BIT);
+				that.sysDraw(0);
+				that.timestamp_init = that.timestamp_now - (that.delta % that.interval);
+			}
 		}
-
-		browserWidth = width;
-		browserHeight = height;
-
+	}
 
 }
 SpriteAnim.prototype.webgl_support = function(canvas) {
@@ -366,11 +315,8 @@ SpriteAnim.prototype.spriteSheetLoaded_ = function(sheet, image, params) {
 SpriteAnim.prototype.spriteSheetStartLoading = function() {
 	var that = this;
 	var image = new Image();
-	this.image_ = image;
-	image.onload = function() {
-		that.onload_();
-	};
-	image.src = this.params_.url;
+	this.image_ = this.image;
+	that.onload_();
 };
 
 SpriteAnim.prototype.spriteSheetInitialize = function(textureUnit, width, height) {
@@ -380,13 +326,13 @@ SpriteAnim.prototype.spriteSheetInitialize = function(textureUnit, width, height
 };
 
 SpriteAnim.prototype.spriteSheetCreateSprite = function() {
-	var screenWidth = this.screenWidth_;;
-	var screenHeight = this.screenHeight_;;
+	var screenWidth = this.canvas.width;
+	var screenHeight = this.canvas.height;
 	// Position the sprite at a random position
 	var centerX = Math.random() * screenWidth;
 	var centerY = Math.random() * screenHeight;
 	// And at a random rotation
-	var rotation = Math.random() * 2.0 * Math.PI;
+	var rotation = 0;
 	// Random velocity
 	var velocityX = Math.random() * (screenWidth / 5.0) - screenWidth / 10.0;
 	var velocityY = Math.random() * (screenHeight / 5.0) - screenHeight / 10.0;
@@ -579,8 +525,8 @@ SpriteAnim.prototype.sysDraw = function(deltaTime) {
 
 		// this.startPositionData_[0] = 0;
 		// this.startPositionData_[2 * ii + 1] = 0;
-		this.positionData_[2 * ii] = 111;
-		this.positionData_[2 * ii + 1] = 111;
+		this.positionData_[2 * ii] = this.width / 2;
+		this.positionData_[2 * ii + 1] = this.width / 2;
 
 	}
 
@@ -623,8 +569,8 @@ SpriteAnim.prototype.sysDraw = function(deltaTime) {
 	// Set up uniforms.
 	this.context.uniform1f(this.frameOffsetLoc_, this.frameOffset_++);
 	this.context.uniform4f(this.screenDimsLoc_,
-		2.0 / this.screenWidth_,
-		-2.0 / this.screenHeight_,
+		2.0 / this.canvas.width,
+		-2.0 / this.canvas.height,
 		-1.0,
 		1.0);
 	this.context.uniform1i(this.texture0Loc_, 0);
