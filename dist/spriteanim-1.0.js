@@ -1,3 +1,10 @@
+/**********************************
+* SpriteAnim v0.1 (beta)
+* Author: Catalin Berta
+* E-mail: catalinberta (at) gmail (dot) com
+* Official page and documentation: https://github.com/catalinberta/SpriteAnimJS
+* Most of the webgl support & structure is inspired from: http://webglfundamentals.org
+**********************************/
 function SpriteAnim(canvasId) {
 	// Canvas
 	this.canvas = document.getElementById(canvasId); // Select given canvas ID
@@ -53,7 +60,7 @@ SpriteAnim.prototype.start = function(spriteObj) {
 
 	// If support for WebGL is enabled, jump to webgl section
 	if(this.webgl_support(this.canvas)) {
-		this.webgl(spriteObj);
+		this.webglStart(spriteObj);
 		return;
 	}
 
@@ -62,6 +69,12 @@ SpriteAnim.prototype.start = function(spriteObj) {
 // Stop method
 SpriteAnim.prototype.stop = function() {
 	this.playSprite = false;
+
+	// If support for WebGL is enabled, jump to webgl section
+	if(this.webgl_support(this.canvas)) {
+		this.webglStop();
+		return;
+	}
 	this.context.clearRect(0, 0, this.totalWidth, this.totalHeight);
 }
 // New tick update
@@ -124,7 +137,7 @@ SpriteAnim.prototype.canvasTicker = function() {
 		}
 	}
 };
-SpriteAnim.prototype.webgl = function(spriteObj) {
+SpriteAnim.prototype.webglStart = function(spriteObj) {
 	var that = this;
 	this.onload = null;
 	this.numOutstandingRequests_ = 0;
@@ -175,8 +188,7 @@ SpriteAnim.prototype.webgl = function(spriteObj) {
 	this.TEXTURE_WEIGHTS_INDEX = 7;
 
 	this.initialize_();
-	this.options = spriteObj;
-	this.sysLoadProgram_(this.options);
+	this.sysLoadProgram_(this.spriteObj);
 	this.frameOffset_ = 0;
 	this.spriteBuffer_ = this.context.createBuffer();
 	this.sysClearAllSprites();
@@ -195,11 +207,9 @@ SpriteAnim.prototype.webgl = function(spriteObj) {
 	this.screenHeight_ = this.totalHeight;
 
 	lastTime = new Date().getTime() * 0.001;
-	console.log(this)
 	this.onload = start;
 	//addSpriteSheet
 	this.name_ = 'boom';
-	console.log(this.horizontalFrames*this.verticalFrames)
 	this.params_ = {frames: this.horizontalFrames*this.verticalFrames, spritesPerRow: this.horizontalFrames, width: this.width, height: this.height};
 	this.textureUnit_ = 0;
 	this.perSpriteFrameOffset_ = 0;
@@ -219,12 +229,16 @@ SpriteAnim.prototype.webgl = function(spriteObj) {
 				that.context.viewport(0, 0, that.width, that.height);
 				that.context.clearColor(0.0, 0.0, 0.0, 0);
 				that.context.clear(that.context.COLOR_BUFFER_BIT | that.context.DEPTH_BUFFER_BIT);
-				that.sysDraw(0);
+				that.sysDraw();
 				that.timestamp_init = that.timestamp_now - (that.delta % that.interval);
 			}
 		}
 	}
 
+}
+SpriteAnim.prototype.webglStop = function() {
+	this.playSprite = false;
+	this.sysDraw('clear');
 }
 SpriteAnim.prototype.webgl_support = function(canvas) {
 	var names = ["webgl", "experimental-webgl"];
@@ -500,7 +514,20 @@ SpriteAnim.prototype.sysSetupConstantLoc_ = function(location, index) {
 		baseOffset + Float32Array.BYTES_PER_ELEMENT * constantAttributeInfo[index].offset);
 };
 
-SpriteAnim.prototype.sysDraw = function(deltaTime) {
+SpriteAnim.prototype.sysDraw = function() {
+	// Reset frame index
+	if(this.frameOffset_ == this.spriteSheets_[0].params_.frames) {
+		if(this.loopSprite) {
+			this.frameOffset_ = -1;
+			if(this.spriteObj.onComplete) {
+				this.spriteObj.onComplete();
+			}
+		} else {
+			this.playSprite = false;
+			return;
+		}
+	}
+
 	this.context.enable(this.context.BLEND);
 	this.context.disable(this.context.DEPTH_TEST);
 	this.context.disable(this.context.CULL_FACE);
@@ -557,14 +584,6 @@ SpriteAnim.prototype.sysDraw = function(deltaTime) {
 	this.sysSetupConstantLoc_(this.spritesPerRowLoc_, this.SPRITES_PER_ROW_INDEX);
 	this.sysSetupConstantLoc_(this.numFramesLoc_, this.NUM_FRAMES_INDEX);
 	this.sysSetupConstantLoc_(this.textureWeightsLoc_, this.TEXTURE_WEIGHTS_INDEX);
-
-	// Reset frame index to 0
-	if(this.frameOffset_ == this.spriteSheets_[0].params_.frames) {
-		this.frameOffset_ = -1;
-		if(this.options.onComplete) {
-			this.options.onComplete();
-		}
-	}
 
 	// Set up uniforms.
 	this.context.uniform1f(this.frameOffsetLoc_, this.frameOffset_++);
