@@ -1,5 +1,5 @@
 /**********************************
-* SpriteAnim v0.1 (beta)
+* SpriteAnim v0.1.0 (beta)
 * Author: Catalin Berta
 * E-mail: catalinberta (at) gmail (dot) com
 * Official page and documentation: https://github.com/catalinberta/SpriteAnimJS
@@ -50,7 +50,7 @@ SpriteAnim.prototype.start = function(spriteObj) {
 	this.verticalFrames = (this.totalHeight / spriteObj.frameHeight) || 1; // Vertical frames
 
 	// FPS stuff
-	this.fps = this.spriteObj.fps;
+	this.fps = this.spriteObj.fps || 30;
 	this.timestamp_init = Date.now(); // Before execution of ticker
 	this.interval = 1000 / this.fps; // Frame's interval in ms 
 	this.timestamp_now, this.delta; // Vars
@@ -342,14 +342,14 @@ SpriteAnim.prototype.spriteSheetInitialize = function(textureUnit, width, height
 SpriteAnim.prototype.spriteSheetCreateSprite = function() {
 	var screenWidth = this.canvas.width;
 	var screenHeight = this.canvas.height;
-	// Position the sprite at a random position
-	var centerX = Math.random() * screenWidth;
-	var centerY = Math.random() * screenHeight;
-	// And at a random rotation
+	// Position the sprite
+	var centerX = 0;
+	var centerY = 0;
+	// And add rotation
 	var rotation = 0;
 	// Random velocity
-	var velocityX = Math.random() * (screenWidth / 5.0) - screenWidth / 10.0;
-	var velocityY = Math.random() * (screenHeight / 5.0) - screenHeight / 10.0;
+	var velocityX = 0;
+	var velocityY = 0;
 	var perSpriteFrameOffset = this.perSpriteFrameOffset_++;
 	if (this.perSpriteFrameOffset_ >= this.params_.frames) {
 		this.perSpriteFrameOffset_ = 0;
@@ -649,5 +649,3 @@ SpriteAnim.prototype.sysAddVertex_ = function(centerX, centerY,
 		Float32Array.BYTES_PER_ELEMENT * (this.positionData_.length + baseIndex),
 		this.constantData_.subarray(baseIndex, baseIndex + this.constantAttributeStride_));
 };
-
-
