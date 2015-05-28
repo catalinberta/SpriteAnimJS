@@ -7,7 +7,7 @@
 	<canvas id="canvas" style="opacity: 0.1;"></canvas>
 	<canvas id="canvas2" style="opacity: 0.1;"></canvas>
 	<script type="text/javascript" src="https://code.createjs.com/preloadjs-0.6.0.min.js"></script>
-	<script type="text/javascript" src="../spriteanim-0.1.0.js"></script>
+	<script type="text/javascript" src="../spriteanim-0.1.1.min.js"></script>
 
 	<script type="text/javascript">
 		// Load sprites with PreloadJS (or with any other you like)
@@ -20,8 +20,8 @@
 
 		// After loading spritesheets, run animations
 		function handleComplete() {
-			var coin = new SpriteAnim("canvas");
-			var explosion = new SpriteAnim("canvas2");
+			coin = new SpriteAnim("canvas");
+			explosion = new SpriteAnim("canvas2");
 
 			coin.start({
 				frameWidth: 100,
