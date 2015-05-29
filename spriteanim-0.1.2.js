@@ -1,5 +1,5 @@
 /**********************************
-* SpriteAnim v0.1.1 (beta)
+* SpriteAnim v0.1.2 (beta)
 * Author: Catalin Berta
 * E-mail: catalinberta (at) gmail (dot) com
 * Official page and documentation: https://github.com/catalinberta/SpriteAnimJS
@@ -23,6 +23,7 @@
 	SpriteAnim.prototype.start = function(spriteObj) {
 		this.spriteObj = spriteObj;
 		this.onStart(); // onStart callback function
+
 		// Add classname, if specified
 		if(spriteObj.className) {
 			if(this.canvas.className) { // If class attribute already exists
@@ -31,6 +32,7 @@
 				this.canvas.className = spriteObj.className; // Add new specified class(es) 
 			}
 		}
+
 		// Sprite Info
 		this.width = this.spriteObj.frameWidth; // Set canvas width
 		this.height = this.spriteObj.frameHeight; // Set canvas width
@@ -307,9 +309,6 @@
 		var centerY = 0;
 		// And add rotation
 		var rotation = 0;
-		// Random velocity
-		var velocityX = 0;
-		var velocityY = 0;
 		var perSpriteFrameOffset = this.perSpriteFrameOffset_++;
 		if (this.perSpriteFrameOffset_ >= this.params_.frames) {
 			this.perSpriteFrameOffset_ = 0;
@@ -324,7 +323,6 @@
 		textureWeights[this.textureUnit_] = 1.0;
 		this.sysAddSprite(centerX, centerY,
 			rotation,
-			velocityX, velocityY,
 			perSpriteFrameOffset,
 			spriteSize,
 			spriteTextureSizeX, spriteTextureSizeY,
@@ -383,20 +381,17 @@
 		var oldPositionData = null;
 		var oldConstantData = null;
 		var oldStartPositionData = null;
-		var oldVelocityData = null;
 		var oldSpriteSizeData = null;
 		if (preserveOldContents) {
 			oldPositionData = this.positionData_;
 			oldConstantData = this.constantData_;
 			oldStartPositionData = this.startPositionData_;
-			oldVelocityData = this.velocityData_;
 			oldSpriteSizeData = this.spriteSizeData_;
 		}
 		this.capacity_ = capacity;
 		this.positionData_ = new Float32Array(2 * capacity);
 		this.constantData_ = new Float32Array(this.constantAttributeStride_ * capacity);
 		this.startPositionData_ = new Array(2 * capacity);
-		this.velocityData_ = new Array(2 * capacity);
 		this.spriteSizeData_ = new Array(capacity);
 
 		this.context.bindBuffer(this.context.ARRAY_BUFFER, this.spriteBuffer_);
@@ -411,9 +406,6 @@
 			for (var ii = 0; ii < oldStartPositionData.length; ++ii) {
 				this.startPositionData_[ii] = oldStartPositionData[ii];
 			}
-			for (var ii = 0; ii < oldVelocityData.length; ++ii) {
-				this.velocityData_[ii] = oldVelocityData[ii];
-			}
 			for (var ii = 0; ii < oldSpriteSizeData.length; ++ii) {
 				this.spriteSizeData_[ii] = oldSpriteSizeData[ii];
 			}
@@ -421,7 +413,6 @@
 	};
 	SpriteAnim.prototype.sysAddSprite = function(centerX, centerY,
 		rotation,
-		velocityX, velocityY,
 		perSpriteFrameOffset,
 		spriteSize,
 		spriteTextureSizeX, spriteTextureSizeY,
@@ -432,7 +423,6 @@
 		for (var ii = 0; ii < offsets.length; ++ii) {
 			this.sysAddVertex_(centerX, centerY,
 				rotation,
-				velocityX, velocityY,
 				perSpriteFrameOffset,
 				spriteSize,
 				offsets[ii][0], offsets[ii][1],
@@ -532,7 +522,6 @@
 	};
 	SpriteAnim.prototype.sysAddVertex_ = function(centerX, centerY,
 		rotation,
-		velocityX, velocityY,
 		perSpriteFrameOffset,
 		spriteSize,
 		cornerOffsetX, cornerOffsetY,
@@ -549,8 +538,6 @@
 		this.positionData_[2 * vertexIndex + 1] = centerY;
 		this.startPositionData_[2 * vertexIndex    ] = centerX;
 		this.startPositionData_[2 * vertexIndex + 1] = centerY;
-		this.velocityData_[2 * vertexIndex    ] = velocityX;
-		this.velocityData_[2 * vertexIndex + 1] = velocityY;
 		this.spriteSizeData_[vertexIndex] = spriteSize;
 
 		// Base index into the constant data
