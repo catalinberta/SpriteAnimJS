@@ -1,5 +1,5 @@
 /**********************************
-* SpriteAnim v0.1.2 (beta)
+* SpriteAnim v0.1.3 (beta)
 * Author: Catalin Berta
 * E-mail: catalinberta (at) gmail (dot) com
 * Official page and documentation: https://github.com/catalinberta/SpriteAnimJS
@@ -205,7 +205,9 @@
 		this.textureUnit_ = 0;
 		this.perSpriteFrameOffset_ = 0;
 		this.spriteSheets_.push(this);
-		this.startLoading();
+		
+		this.numOutstandingRequests_ = this.spriteSheets_.length;
+		this.spriteSheetLoaded_(this, this.image, this.params_);
 
 		function start() {
 			this.spriteSheetCreateSprite();
@@ -267,11 +269,6 @@
 			}
 		}
 	};
-	SpriteAnim.prototype.startLoading = function() {
-		var len = this.spriteSheets_.length;
-		this.numOutstandingRequests_ = len;
-		this.spriteSheetStartLoading();
-	};
 	SpriteAnim.prototype.spriteSheetLoaded_ = function(sheet, image, params) {
 		var texture = this.context.createTexture();
 		this.context.bindTexture(this.context.TEXTURE_2D, texture);
@@ -281,7 +278,10 @@
 		this.context.texParameteri(this.context.TEXTURE_2D, this.context.TEXTURE_WRAP_T, this.context.CLAMP_TO_EDGE);
 		this.context.texImage2D(this.context.TEXTURE_2D, 0, this.context.RGBA, this.context.RGBA, this.context.UNSIGNED_BYTE, image);
 
-		sheet.spriteSheetInitialize(this.currentTextureUnit_, image.width, image.height);
+		this.textureUnit_ = this.currentTextureUnit_;
+		this.textureWidth_ = image.width;
+		this.textureHeight_ = image.height;
+
 		this.textures_[this.currentTextureUnit_] = texture;
 		++this.currentTextureUnit_;
 		if (--this.numOutstandingRequests_ == 0) {
@@ -289,17 +289,6 @@
 				this.onload();
 			}
 		}
-	};
-	SpriteAnim.prototype.spriteSheetStartLoading = function() {
-		var that = this;
-		var image = new Image();
-		this.image_ = this.image;
-		that.onload_();
-	};
-	SpriteAnim.prototype.spriteSheetInitialize = function(textureUnit, width, height) {
-		this.textureUnit_ = textureUnit;
-		this.textureWidth_ = width;
-		this.textureHeight_ = height;
 	};
 	SpriteAnim.prototype.spriteSheetCreateSprite = function() {
 		var screenWidth = this.canvas.width;
@@ -321,17 +310,8 @@
 		var numFrames = this.params_.frames;
 		var textureWeights = [ 0.0, 0.0, 0.0, 0.0 ];
 		textureWeights[this.textureUnit_] = 1.0;
-		this.sysAddSprite(centerX, centerY,
-			rotation,
-			perSpriteFrameOffset,
-			spriteSize,
-			spriteTextureSizeX, spriteTextureSizeY,
-			spritesPerRow,
-			numFrames,
+		this.sysAddSprite(centerX, centerY,rotation,perSpriteFrameOffset,spriteSize,spriteTextureSizeX, spriteTextureSizeY,spritesPerRow,numFrames,
 			textureWeights);
-	};
-	SpriteAnim.prototype.onload_ = function() {
-		this.spriteSheetLoaded_(this, this.image_, this.params_);
 	};
 	SpriteAnim.prototype.sysLoadShader = function(shaderSource, shaderType) {
 		var shader = this.context.createShader(shaderType);
@@ -421,15 +401,8 @@
 		textureWeights) {
 		var offsets = this.offsets_;
 		for (var ii = 0; ii < offsets.length; ++ii) {
-			this.sysAddVertex_(centerX, centerY,
-				rotation,
-				perSpriteFrameOffset,
-				spriteSize,
-				offsets[ii][0], offsets[ii][1],
-				spriteTextureSizeX, spriteTextureSizeY,
-				spritesPerRow,
-				numFrames,
-				textureWeights);
+			this.sysAddVertex_(centerX, centerY,rotation,perSpriteFrameOffset,spriteSize,offsets[ii][0],offsets[ii][1],spriteTextureSizeX,
+				spriteTextureSizeY,spritesPerRow,numFrames,textureWeights);
 		}
 	};
 	SpriteAnim.prototype.sysSetupConstantLoc_ = function(location, index) {
@@ -520,15 +493,8 @@
 		// Do the draw call.
 		this.context.drawArrays(this.context.TRIANGLES, 0, this.numVertices_);
 	};
-	SpriteAnim.prototype.sysAddVertex_ = function(centerX, centerY,
-		rotation,
-		perSpriteFrameOffset,
-		spriteSize,
-		cornerOffsetX, cornerOffsetY,
-		spriteTextureSizeX, spriteTextureSizeY,
-		spritesPerRow,
-		numFrames,
-		textureWeights) {
+	SpriteAnim.prototype.sysAddVertex_ = function(centerX, centerY,rotation,perSpriteFrameOffset,spriteSize,cornerOffsetX, cornerOffsetY,
+		spriteTextureSizeX,spriteTextureSizeY,spritesPerRow,numFrames,textureWeights) {
 		if (this.numVertices_ == this.capacity_) {
 			this.sysResizeCapacity_(this.capacity_ * 2, true);
 		}
