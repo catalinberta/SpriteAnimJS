@@ -1,15 +1,19 @@
-
 <!DOCTYPE html>
 <html>
 <head>
 	<title>Examples of SpriteAnimJS</title>
+	<style type="text/css">
+		canvas {
+			vertical-align: middle;
+		}
+	</style>
 </head>
 <body id="" style="background: #ddd;" onload="">
-	<canvas id="canvas" style="opacity: 0.1;"></canvas>
-	<canvas id="canvas2" style="opacity: 0.1;"></canvas>
-	<canvas id="canvas3" style="opacity: 0.1;"></canvas>
+	<p>No Loop<canvas id="canvas" style="opacity: 1;"></canvas></p>
+	<p>Loop<canvas id="canvas2" style="opacity: 1;"></canvas></p>
+	<p>Force Canvas 2D<canvas id="canvas3" style="opacity: 1;"></canvas></p>
 	<script type="text/javascript" src="https://code.createjs.com/preloadjs-0.6.0.min.js"></script>
-	<script type="text/javascript" src="../spriteanim-0.1.3.js"></script>
+	<script type="text/javascript" src="../spriteanim-0.1.4.js"></script>
 
 	<script type="text/javascript">
 		// Load sprites with PreloadJS (or with any other you like)
@@ -23,9 +27,9 @@
 
 		// After loading spritesheets, run animations
 		function handleComplete() {
-			coin = new SpriteAnim("canvas");
-			explosion = new SpriteAnim("canvas2");
-			boost = new SpriteAnim("canvas3");
+			coin = new SpriteAnim("canvas",false);
+			explosion = new SpriteAnim("canvas2",false);
+			boost = new SpriteAnim("canvas3",true);
 
 			coin.start({
 				frameWidth: 100,
@@ -56,27 +60,11 @@
 				frameHeight: 350,
 				image: queue.getResult("boost"),
 				fps: 30,
-				className: 'explosion_class',
+				className: 'boost_class',
 				loop: true
 			});  
 
 		}
 	</script>
-	<!-- Shaders - SpriteAnim needs these shaders loaded into your template -->
-	<script id="spriteVertexShader" type="x-shader/x-vertex">
-		uniform float u_frameOffset;uniform vec4 u_screenDims;attribute vec2 centerPosition;attribute float rotation;attribute float perSpriteFrameOffset;attribute float spriteSize;attribute vec2 cornerOffset;attribute vec2 spriteTextureSize;attribute float spritesPerRow;attribute float numFrames;attribute vec4 textureWeights;varying vec2 v_texCoord;varying vec4 v_textureWeights;
-		void main() {
-			float frameNumber = mod(u_frameOffset + perSpriteFrameOffset, numFrames);float row = floor(frameNumber / spritesPerRow); vec2 upperLeftTC = vec2(spriteTextureSize.x * (frameNumber - (row * spritesPerRow)), spriteTextureSize.y * row); vec2 tc = upperLeftTC + spriteTextureSize * (cornerOffset + vec2(0.5, 0.5)); v_texCoord = tc; v_textureWeights = textureWeights; float s = sin(rotation); float c = cos(rotation); mat2 rotMat = mat2(c, -s, s, c); vec2 scaledOffset = spriteSize * cornerOffset; vec2 pos = centerPosition + rotMat * scaledOffset; gl_Position = vec4(pos * u_screenDims.xy + u_screenDims.zw, 0.0, 1.0);
-		}
-	</script>
-	<script id="spriteFragmentShader" type="x-shader/x-fragment">
-		precision mediump float;uniform sampler2D u_texture0;uniform sampler2D u_texture1;uniform sampler2D u_texture2;uniform sampler2D u_texture3;
-		varying vec2 v_texCoord;varying vec4 v_textureWeights;
-		void main() {
-			vec4 color; if (v_textureWeights.x > 0.0) color = texture2D(u_texture0, v_texCoord); else if (v_textureWeights.y > 0.0) color = texture2D(u_texture1, v_texCoord); else if (v_textureWeights.z > 0.0) color = texture2D(u_texture2, v_texCoord); else color = texture2D(u_texture3, v_texCoord);
-			gl_FragColor = color;
-		}
-	</script>
-	<!-- End of Shaders -->
 </body>
 </html>

@@ -20,14 +20,14 @@ engine :)
 Create the html canvas element
 `<canvas id="canvas"></canvas>`
 
-Load [shaders](https://raw.githubusercontent.com/catalinberta/SpriteAnimJS/master/example/index.html) as shown in the example at the bottom (see example folder)
-
-Initiate SpriteAnim on the canvas element
-`var myAnimation = new SpriteAnim('canvas');`
+Initiate SpriteAnim on the canvas element: var mySpriteAnimation = new SpriteAnim(canvasId,forceCanvas2D)
+@Param1: {string} - ID of the canvas element
+@Param2: {boolean | optional} - Wether to force the spritesheet's render in 2D Canvas or not
+`var mySpriteAnimation = new SpriteAnim('canvas');`
 
 Run spritesheet animation
 
-myAnimation.start({
+mySpriteAnimation.start({
 
 				frameWidth: 100,
 				frameHeight: 100,
@@ -62,7 +62,7 @@ myAnimation.start({
 ####**Stop**
 `instance.stop()`
 
-i.e. `canvas.stop()`
+i.e. `mySpriteAnimation.stop()`
 
 #Preloading
 

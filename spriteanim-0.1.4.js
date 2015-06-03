@@ -1,22 +1,30 @@
-/**********************************
-* SpriteAnim v0.1.3 (beta)
+/*******************************************************************************************
+* SpriteAnim v0.1.4 (beta)
 * Author: Catalin Berta
 * E-mail: catalinberta (at) gmail (dot) com
 * Official page and documentation: https://github.com/catalinberta/SpriteAnimJS
-* I've gotten most of the webgl support from: http://webglfundamentals.org - check it out
-**********************************/
+* I've gotten most of the awesome webgl support from: http://webglsamples.org - check it out
+*******************************************************************************************/
 (function(window) {
 	"use strict";
-	var SpriteAnim = function(canvasId) {
+	var SpriteAnim = function(canvasId,forceCanvas) {
 		this.canvas = document.getElementById(canvasId); // Select given canvas ID
+		this.useCanvas = forceCanvas || false;
 		this.init();
 	}
 	// Get type of context
 	SpriteAnim.prototype.init = function() {
-		if(this.webgl_support(this.canvas)) {
-			this.context = this.create3DContext(this.canvas);  // Get 3D context
-		} else {
+		if(this.useCanvas) { // Manually force 2d Canvas
 			this.context = this.canvas.getContext("2d"); // Get 2D context
+		} else {
+			if(this.webgl_support(this.canvas)) { // If WebGL is supported
+				this.context = this.create3DContext(this.canvas);  // Get 3D context
+				if(!document.getElementById('spriteAnimFragmentShader')) {
+					this.injectShaders();
+				}
+			} else {
+				this.context = this.canvas.getContext("2d"); // Fallback to 2D context
+			}
 		}
 	}
 	// Start method
@@ -59,7 +67,7 @@
 		this.playSprite = true; // Play state boolean
 
 		// If support for WebGL is enabled, jump to webgl section
-		if(this.webgl_support(this.canvas)) {
+		if(!this.useCanvas) {
 			this.webglStart(spriteObj);
 			return;
 		}
@@ -137,6 +145,22 @@
 			}
 		}
 	};
+	SpriteAnim.prototype.injectShaders = function() {
+		// Vertex Shader
+		var vertexShader = document.createElement('script');
+		vertexShader.type = "x-shader/x-vertex";
+		vertexShader.id = "spriteAnimVertexShader";
+		var codeVertex = 'uniform float u_frameOffset;uniform vec4 u_screenDims;attribute vec2 centerPosition;attribute float rotation;attribute float perSpriteFrameOffset;attribute float spriteSize;attribute vec2 cornerOffset;attribute vec2 spriteTextureSize;attribute float spritesPerRow;attribute float numFrames;attribute vec4 textureWeights;varying vec2 v_texCoord;varying vec4 v_textureWeights;		void main() {			float frameNumber = mod(u_frameOffset + perSpriteFrameOffset, numFrames);float row = floor(frameNumber / spritesPerRow); vec2 upperLeftTC = vec2(spriteTextureSize.x * (frameNumber - (row * spritesPerRow)), spriteTextureSize.y * row); vec2 tc = upperLeftTC + spriteTextureSize * (cornerOffset + vec2(0.5, 0.5)); v_texCoord = tc; v_textureWeights = textureWeights; float s = sin(rotation); float c = cos(rotation); mat2 rotMat = mat2(c, -s, s, c); vec2 scaledOffset = spriteSize * cornerOffset; vec2 pos = centerPosition + rotMat * scaledOffset; gl_Position = vec4(pos * u_screenDims.xy + u_screenDims.zw, 0.0, 1.0);		}';
+		vertexShader.appendChild(document.createTextNode(codeVertex));
+		document.body.appendChild(vertexShader)
+		// Fragment Shader
+		var fragmentShader = document.createElement('script');
+		fragmentShader.type = "x-shader/x-fragment";
+		fragmentShader.id = "spriteAnimFragmentShader";
+		var codeFragment = 'precision mediump float;uniform sampler2D u_texture0;uniform sampler2D u_texture1;uniform sampler2D u_texture2;uniform sampler2D u_texture3;		varying vec2 v_texCoord;varying vec4 v_textureWeights;		void main() {			vec4 color; if (v_textureWeights.x > 0.0) color = texture2D(u_texture0, v_texCoord); else if (v_textureWeights.y > 0.0) color = texture2D(u_texture1, v_texCoord); else if (v_textureWeights.z > 0.0) color = texture2D(u_texture2, v_texCoord); else color = texture2D(u_texture3, v_texCoord);			gl_FragColor = color;		}';		
+		fragmentShader.appendChild(document.createTextNode(codeFragment));
+		document.body.appendChild(fragmentShader)
+	}
 	SpriteAnim.prototype.webglStart = function(spriteObj) {
 		var that = this;
 		this.onload = null;
@@ -329,8 +353,8 @@
 		this.precisePositionView_ = null;
 	};
 	SpriteAnim.prototype.sysLoadProgram_ = function(options) {
-		var fragmentShaderName = 'spriteFragmentShader';
-		var vertexShader = this.sysLoadShader(document.getElementById('spriteVertexShader').text, this.context.VERTEX_SHADER);
+		var fragmentShaderName = 'spriteAnimFragmentShader';
+		var vertexShader = this.sysLoadShader(document.getElementById('spriteAnimVertexShader').text, this.context.VERTEX_SHADER);
 		var fragmentShader = this.sysLoadShader(document.getElementById(fragmentShaderName).text, this.context.FRAGMENT_SHADER);
 		var program = this.context.createProgram();
 		this.context.attachShader(program, vertexShader);
