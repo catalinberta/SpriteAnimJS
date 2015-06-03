@@ -24,6 +24,7 @@
 				}
 			} else {
 				this.context = this.canvas.getContext("2d"); // Fallback to 2D context
+				this.useCanvas = true;
 			}
 		}
 	}
@@ -147,19 +148,18 @@
 	};
 	SpriteAnim.prototype.injectShaders = function() {
 		// Vertex Shader
-		var vertexShader = document.createElement('script');
-		vertexShader.type = "x-shader/x-vertex";
+		var vertexShader   = document.createElement("script");
+		vertexShader.type  = "x-shader/x-vertex";
 		vertexShader.id = "spriteAnimVertexShader";
-		var codeVertex = 'uniform float u_frameOffset;uniform vec4 u_screenDims;attribute vec2 centerPosition;attribute float rotation;attribute float perSpriteFrameOffset;attribute float spriteSize;attribute vec2 cornerOffset;attribute vec2 spriteTextureSize;attribute float spritesPerRow;attribute float numFrames;attribute vec4 textureWeights;varying vec2 v_texCoord;varying vec4 v_textureWeights;		void main() {			float frameNumber = mod(u_frameOffset + perSpriteFrameOffset, numFrames);float row = floor(frameNumber / spritesPerRow); vec2 upperLeftTC = vec2(spriteTextureSize.x * (frameNumber - (row * spritesPerRow)), spriteTextureSize.y * row); vec2 tc = upperLeftTC + spriteTextureSize * (cornerOffset + vec2(0.5, 0.5)); v_texCoord = tc; v_textureWeights = textureWeights; float s = sin(rotation); float c = cos(rotation); mat2 rotMat = mat2(c, -s, s, c); vec2 scaledOffset = spriteSize * cornerOffset; vec2 pos = centerPosition + rotMat * scaledOffset; gl_Position = vec4(pos * u_screenDims.xy + u_screenDims.zw, 0.0, 1.0);		}';
-		vertexShader.appendChild(document.createTextNode(codeVertex));
-		document.body.appendChild(vertexShader)
+		vertexShader.text  = 'uniform float u_frameOffset;uniform vec4 u_screenDims;attribute vec2 centerPosition;attribute float rotation;attribute float perSpriteFrameOffset;attribute float spriteSize;attribute vec2 cornerOffset;attribute vec2 spriteTextureSize;attribute float spritesPerRow;attribute float numFrames;attribute vec4 textureWeights;varying vec2 v_texCoord;varying vec4 v_textureWeights;		void main() {			float frameNumber = mod(u_frameOffset + perSpriteFrameOffset, numFrames);float row = floor(frameNumber / spritesPerRow); vec2 upperLeftTC = vec2(spriteTextureSize.x * (frameNumber - (row * spritesPerRow)), spriteTextureSize.y * row); vec2 tc = upperLeftTC + spriteTextureSize * (cornerOffset + vec2(0.5, 0.5)); v_texCoord = tc; v_textureWeights = textureWeights; float s = sin(rotation); float c = cos(rotation); mat2 rotMat = mat2(c, -s, s, c); vec2 scaledOffset = spriteSize * cornerOffset; vec2 pos = centerPosition + rotMat * scaledOffset; gl_Position = vec4(pos * u_screenDims.xy + u_screenDims.zw, 0.0, 1.0);		}'               // use this for inline script
+		document.body.appendChild(vertexShader);
+
 		// Fragment Shader
-		var fragmentShader = document.createElement('script');
-		fragmentShader.type = "x-shader/x-fragment";
+		var fragmentShader   = document.createElement("script");
+		fragmentShader.type  = "x-shader/x-fragment";
 		fragmentShader.id = "spriteAnimFragmentShader";
-		var codeFragment = 'precision mediump float;uniform sampler2D u_texture0;uniform sampler2D u_texture1;uniform sampler2D u_texture2;uniform sampler2D u_texture3;		varying vec2 v_texCoord;varying vec4 v_textureWeights;		void main() {			vec4 color; if (v_textureWeights.x > 0.0) color = texture2D(u_texture0, v_texCoord); else if (v_textureWeights.y > 0.0) color = texture2D(u_texture1, v_texCoord); else if (v_textureWeights.z > 0.0) color = texture2D(u_texture2, v_texCoord); else color = texture2D(u_texture3, v_texCoord);			gl_FragColor = color;		}';		
-		fragmentShader.appendChild(document.createTextNode(codeFragment));
-		document.body.appendChild(fragmentShader)
+		fragmentShader.text  = "precision mediump float;uniform sampler2D u_texture0;uniform sampler2D u_texture1;uniform sampler2D u_texture2;uniform sampler2D u_texture3;		varying vec2 v_texCoord;varying vec4 v_textureWeights;		void main() {			vec4 color; if (v_textureWeights.x > 0.0) color = texture2D(u_texture0, v_texCoord); else if (v_textureWeights.y > 0.0) color = texture2D(u_texture1, v_texCoord); else if (v_textureWeights.z > 0.0) color = texture2D(u_texture2, v_texCoord); else color = texture2D(u_texture3, v_texCoord);			gl_FragColor = color;		}"               // use this for inline script
+		document.body.appendChild(fragmentShader);
 	}
 	SpriteAnim.prototype.webglStart = function(spriteObj) {
 		var that = this;
@@ -334,8 +334,11 @@
 		var numFrames = this.params_.frames;
 		var textureWeights = [ 0.0, 0.0, 0.0, 0.0 ];
 		textureWeights[this.textureUnit_] = 1.0;
-		this.sysAddSprite(centerX, centerY,rotation,perSpriteFrameOffset,spriteSize,spriteTextureSizeX, spriteTextureSizeY,spritesPerRow,numFrames,
-			textureWeights);
+		var offsets = this.offsets_;
+		for (var ii = 0; ii < offsets.length; ++ii) {
+			this.sysAddVertex_(centerX, centerY,rotation,perSpriteFrameOffset,spriteSize,offsets[ii][0],offsets[ii][1],spriteTextureSizeX,
+				spriteTextureSizeY,spritesPerRow,numFrames,textureWeights);
+		}
 	};
 	SpriteAnim.prototype.sysLoadShader = function(shaderSource, shaderType) {
 		var shader = this.context.createShader(shaderType);
@@ -413,20 +416,6 @@
 			for (var ii = 0; ii < oldSpriteSizeData.length; ++ii) {
 				this.spriteSizeData_[ii] = oldSpriteSizeData[ii];
 			}
-		}
-	};
-	SpriteAnim.prototype.sysAddSprite = function(centerX, centerY,
-		rotation,
-		perSpriteFrameOffset,
-		spriteSize,
-		spriteTextureSizeX, spriteTextureSizeY,
-		spritesPerRow,
-		numFrames,
-		textureWeights) {
-		var offsets = this.offsets_;
-		for (var ii = 0; ii < offsets.length; ++ii) {
-			this.sysAddVertex_(centerX, centerY,rotation,perSpriteFrameOffset,spriteSize,offsets[ii][0],offsets[ii][1],spriteTextureSizeX,
-				spriteTextureSizeY,spritesPerRow,numFrames,textureWeights);
 		}
 	};
 	SpriteAnim.prototype.sysSetupConstantLoc_ = function(location, index) {
