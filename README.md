@@ -20,10 +20,11 @@ engine :)
 Create the html canvas element
 `<canvas id="canvas"></canvas>`
 
-Initiate SpriteAnim on the canvas element: var mySpriteAnimation = new SpriteAnim(canvasId,forceCanvas2D)
+Initiate SpriteAnim on the canvas element: `var mySpriteAnimation = new SpriteAnim(canvasId,forceCanvas2D)`
+
 @Param1: {string} - ID of the canvas element
+
 @Param2: {boolean | optional} - Wether to force the spritesheet's render in 2D Canvas or not
-`var mySpriteAnimation = new SpriteAnim('canvas');`
 
 Run spritesheet animation
 
