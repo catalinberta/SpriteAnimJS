@@ -1,11 +1,13 @@
+
 <!DOCTYPE html>
 <html>
 <head>
 	<title>Examples of SpriteAnimJS</title>
 </head>
-<body id="`" onload="">
+<body id="" style="background: #ddd;" onload="">
 	<canvas id="canvas" style="opacity: 0.1;"></canvas>
 	<canvas id="canvas2" style="opacity: 0.1;"></canvas>
+	<canvas id="canvas3" style="opacity: 0.1;"></canvas>
 	<script type="text/javascript" src="https://code.createjs.com/preloadjs-0.6.0.min.js"></script>
 	<script type="text/javascript" src="../spriteanim-0.1.3.js"></script>
 
@@ -14,7 +16,8 @@
 		var queue = new createjs.LoadQueue(true);
 		queue.loadManifest([
 			{id:"coin", src:"images/coin.png"},
-			{id:"explosion", src:"images/explosion.png"}
+			{id:"explosion", src:"images/explosion.png"},
+			{id:"boost", src:"images/boost.png"}
 		]);
 		queue.on("complete", handleComplete, this);
 
@@ -22,6 +25,7 @@
 		function handleComplete() {
 			coin = new SpriteAnim("canvas");
 			explosion = new SpriteAnim("canvas2");
+			boost = new SpriteAnim("canvas3");
 
 			coin.start({
 				frameWidth: 100,
@@ -44,6 +48,15 @@
 				onComplete: function() {
 				  console.log('onComplete explosion callback')
 				},
+				loop: true
+			});  
+
+			boost.start({
+				frameWidth: 350,
+				frameHeight: 350,
+				image: queue.getResult("boost"),
+				fps: 30,
+				className: 'explosion_class',
 				loop: true
 			});  
 
