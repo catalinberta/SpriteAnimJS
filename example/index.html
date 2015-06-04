@@ -2,18 +2,14 @@
 <html>
 <head>
 	<title>Examples of SpriteAnimJS</title>
-	<style type="text/css">
-		canvas {
-			vertical-align: middle;
-		}
-	</style>
+	<style type="text/css">	canvas { vertical-align: middle; } </style>
 </head>
 <body id="" style="background: #ddd;" onload="">
 	<p>No Loop<canvas id="canvas" style="opacity: 1;"></canvas></p>
 	<p>Loop<canvas id="canvas2" style="opacity: 1;"></canvas></p>
 	<p>Force Canvas 2D<canvas id="canvas3" style="opacity: 1;"></canvas></p>
 	<script type="text/javascript" src="https://code.createjs.com/preloadjs-0.6.0.min.js"></script>
-	<script type="text/javascript" src="../spriteanim-0.1.4.js"></script>
+	<script type="text/javascript" src="../spriteanim-0.1.5.js"></script>
 
 	<script type="text/javascript">
 		// Load sprites with PreloadJS (or with any other you like)
@@ -29,7 +25,7 @@
 		function handleComplete() {
 			coin = new SpriteAnim("canvas",false);
 			explosion = new SpriteAnim("canvas2",false);
-			boost = new SpriteAnim("canvas3",true);
+			boost = new SpriteAnim("canvas3",false);
 
 			coin.start({
 				frameWidth: 100,

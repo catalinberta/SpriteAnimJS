@@ -1,5 +1,5 @@
 /*******************************************************************************************
-* SpriteAnim v0.1.4 (beta)
+* SpriteAnim v0.1.5 (beta)
 * Author: Catalin Berta
 * E-mail: catalinberta (at) gmail (dot) com
 * Official page and documentation: https://github.com/catalinberta/SpriteAnimJS
@@ -158,7 +158,7 @@
 		var fragmentShader   = document.createElement("script");
 		fragmentShader.type  = "x-shader/x-fragment";
 		fragmentShader.id = "spriteAnimFragmentShader";
-		fragmentShader.text  = "precision mediump float;uniform sampler2D u_texture0;uniform sampler2D u_texture1;uniform sampler2D u_texture2;uniform sampler2D u_texture3;		varying vec2 v_texCoord;varying vec4 v_textureWeights;		void main() {			vec4 color; if (v_textureWeights.x > 0.0) color = texture2D(u_texture0, v_texCoord); else if (v_textureWeights.y > 0.0) color = texture2D(u_texture1, v_texCoord); else if (v_textureWeights.z > 0.0) color = texture2D(u_texture2, v_texCoord); else color = texture2D(u_texture3, v_texCoord);			gl_FragColor = color;		}"               // use this for inline script
+		fragmentShader.text  = "precision mediump float;uniform sampler2D u_texture0;uniform sampler2D u_texture1;uniform sampler2D u_texture2;uniform sampler2D u_texture3;		varying vec2 v_texCoord;varying vec4 v_textureWeights;		void main() {			vec4 color; if (v_textureWeights.x > 0.0) color = texture2D(u_texture0, v_texCoord); else if (v_textureWeights.y > 0.0) color = texture2D(u_texture1, v_texCoord); else if (v_textureWeights.z > 0.0) color = texture2D(u_texture2, v_texCoord); else color = texture2D(u_texture3, v_texCoord); gl_FragColor = color; }"
 		document.body.appendChild(fragmentShader);
 	}
 	SpriteAnim.prototype.webglStart = function(spriteObj) {
@@ -168,6 +168,12 @@
 		this.spriteSheets_ = [];
 		this.textures_ = [];
 		this.currentTextureUnit_ = 0;
+
+		this.context.pixelStorei(this.context.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+		this.context.enable(this.context.BLEND);
+		this.context.disable(this.context.DEPTH_TEST);
+		this.context.disable(this.context.CULL_FACE);
+		this.context.blendFunc(this.context.ONE, this.context.ONE_MINUS_SRC_ALPHA);
 
 		//SpriteSystem
 		this.constantAttributeInfo_ = [
@@ -443,10 +449,7 @@
 				return;
 			}
 		}
-		this.context.enable(this.context.BLEND);
-		this.context.disable(this.context.DEPTH_TEST);
-		this.context.disable(this.context.CULL_FACE);
-		this.context.blendFunc(this.context.ONE, this.context.ONE_MINUS_SRC_ALPHA);
+		
 		// Recompute all sprites' positions. Wrap around offscreen.
 		var numVertices = this.numVertices_;
 		for (var ii = 0; ii < numVertices; ++ii) {
