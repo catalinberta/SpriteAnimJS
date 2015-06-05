@@ -72,5 +72,5 @@ It's recommended that you preload all of the spritesheets that you are planning 
 --
 
 There you have it, a very easy way to create Sprite Animations in WebGL with fallback to canvas.
-I use it to create smooth particle-based sprite animations in various places on a webpage or game.
+I use it to create smooth particle-based sprite animations in various places in a webpage or in a game.
 

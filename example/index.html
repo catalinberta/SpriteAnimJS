@@ -1,46 +1,102 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Examples of SpriteAnimJS</title>
-	<style type="text/css">	canvas { vertical-align: middle; } </style>
-</head>
-<body id="" style="background: #ddd;" onload="">
-	<p>No Loop<canvas id="canvas" style="opacity: 1;"></canvas></p>
-	<p>Loop<canvas id="canvas2" style="opacity: 1;"></canvas></p>
-	<p>Force Canvas 2D<canvas id="canvas3" style="opacity: 1;"></canvas></p>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>SpriteAnimJS Download</title>
+	<link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700,900" rel="stylesheet" />
+	<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.1.1/gh-fork-ribbon.min.css" />
+	<link href="css/main.css" rel="stylesheet" type="text/css" media="all" />
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
 	<script type="text/javascript" src="https://code.createjs.com/preloadjs-0.6.0.min.js"></script>
 	<script type="text/javascript" src="../spriteanim-0.1.5.js"></script>
-
+</head>
+<body>
+	<div class="github-fork-ribbon-wrapper right">
+	    <div class="github-fork-ribbon" style="background-color: #DC572E;">
+	        <a href="https://github.com/catalinberta/SpriteAnimJS">Fork me on GitHub</a>
+	    </div>
+	</div>
+	<div id="header-wrapper">
+		<div id="header" class="container">
+			<div id="logo">
+				<h1><a href="#">SpriteAnimJS</a></h1>
+				<span>Play spritesheet animations. That is all.</span>
+			</div>
+		</div>
+	</div>
+	<div id="wrapper">
+		<div id="main" class="container">
+			<div class="col col1">
+				<canvas id="canvas1"></canvas>
+				<span class="fps">FPS: <span>50</span></span>
+				<span class="info">Rendering: <span>WebGL/Canvas</span></span>
+				<a class="btn btn_left canvas1" href="javascript:;">Play</a>
+				<a class="btn btn_right canvas1" href="javascript:;">Stop</a>
+			</div>
+			<div class="col col2">
+				<canvas id="canvas2" style="margin-top: 20px;"></canvas>
+				<span class="fps">FPS: <span>10</span></span>
+				<span class="info">Rendering: <span>WebGL/Canvas</span></span>
+				<a class="btn btn_left canvas2" href="javascript:;">Play</a>
+				<a class="btn btn_right canvas2" href="javascript:;">Stop</a>
+			</div>
+			<div class="col col3">
+				<canvas id="canvas3" style="margin-top: 40px;"></canvas>
+				<span class="info">Rendering: <span>Canvas Only</span></span>
+				<span class="fps">FPS: <span>40</span></span>
+				<a class="btn btn_left canvas3" href="javascript:;">Play</a>
+				<a class="btn btn_right canvas3" href="javascript:;">Stop</a>
+			</div>
+		</div>
+	</div>
 	<script type="text/javascript">
-		// Load sprites with PreloadJS (or with any other you like)
+		// Load sprites with PreloadJS (or with any other preloader you want)
 		var queue = new createjs.LoadQueue(true);
 		queue.loadManifest([
-			{id:"coin", src:"images/coin.png"},
-			{id:"explosion", src:"images/explosion.png"},
-			{id:"boost", src:"images/boost.png"}
+			{id:"boost1", src:"spritesheets/boost1.png"},
+			{id:"running", src:"spritesheets/running.png"},
+			{id:"explosion", src:"spritesheets/explosion.png"}
 		]);
 		queue.on("complete", handleComplete, this);
 
 		// After loading spritesheets, run animations
 		function handleComplete() {
-			coin = new SpriteAnim("canvas",false);
-			explosion = new SpriteAnim("canvas2",false);
-			boost = new SpriteAnim("canvas3",false);
+			boost1 = new SpriteAnim("canvas1");
+			running = new SpriteAnim("canvas2");
+			explosion = new SpriteAnim("canvas3",true);
 
-			coin.start({
-				frameWidth: 100,
-				frameHeight: 100,
-				image: queue.getResult("coin"),
+			console.log(running)
+
+			startBoost1();
+			startRunning();
+			startExplosion();
+		}
+		function startBoost1() {
+			boost1.start({
+				frameWidth: 350,
+				frameHeight: 350,
+				image: queue.getResult("boost1"), // Image from preloader
+				fps: 50,
+				className: 'boost_class',
+				loop: true
+			});
+		};
+		function startRunning() {
+			running.start({
+				frameWidth: 180,
+				frameHeight: 340,
+				image: queue.getResult("running"), // Image from preloader
 				fps: 10,
-				className: 'coin_class',
-				loop: false
-			}); 
-
+				className: 'running_class',
+				loop: true
+			});  
+		}
+		function startExplosion() {
 			explosion.start({
 				frameWidth: 256,
 				frameHeight: 256,
-				image: queue.getResult("explosion"),
-				fps: 30,
+				image: queue.getResult("explosion"), // Image from preloader
+				fps: 40,
 				className: 'explosion_class',
 				onStart: function() {
 				  console.log('onStart explosion callback')
@@ -49,18 +105,29 @@
 				  console.log('onComplete explosion callback')
 				},
 				loop: true
-			});  
-
-			boost.start({
-				frameWidth: 350,
-				frameHeight: 350,
-				image: queue.getResult("boost"),
-				fps: 30,
-				className: 'boost_class',
-				loop: true
-			});  
-
+			}); 
 		}
+
+		$(function() {
+			$('.col1 .btn.btn_left').click(function() {
+				 startBoost1();
+			});
+			$('.col1 .btn.btn_right').click(function() {
+				boost1.stop();
+			});
+			$('.col2 .btn.btn_left').click(function() {
+				startRunning();
+			});
+			$('.col2 .btn.btn_right').click(function() {
+				running.stop();
+			});
+			$('.col3 .btn.btn_left').click(function() {
+				startExplosion();
+			});
+			$('.col3 .btn.btn_right').click(function() {
+				explosion.stop();
+			});
+		});
 	</script>
 </body>
 </html>
