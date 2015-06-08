@@ -164,7 +164,6 @@
 	SpriteAnim.prototype.webglStart = function(spriteObj) {
 		var that = this;
 		this.onload = null;
-		this.numOutstandingRequests_ = 0;
 		this.spriteSheets_ = [];
 		this.textures_ = [];
 		this.currentTextureUnit_ = 0;
@@ -228,20 +227,29 @@
 		this.screenWidth_ = this.totalWidth;
 		this.screenHeight_ = this.totalHeight;
 
-		this.onload = start;
+		this.onload = this.spriteSheetCreateSprite;
 		//addSpriteSheet
-		this.name_ = 'boom';
 		this.params_ = {frames: this.horizontalFrames*this.verticalFrames, spritesPerRow: this.horizontalFrames, width: this.width, height: this.height};
 		this.textureUnit_ = 0;
 		this.perSpriteFrameOffset_ = 0;
 		this.spriteSheets_.push(this);
 		
-		this.numOutstandingRequests_ = this.spriteSheets_.length;
-		this.spriteSheetLoaded_(this, this.image, this.params_);
+		var texture = this.context.createTexture();
+		this.context.bindTexture(this.context.TEXTURE_2D, texture);
+		this.context.texParameteri(this.context.TEXTURE_2D, this.context.TEXTURE_MIN_FILTER, this.context.LINEAR);
+		this.context.texParameteri(this.context.TEXTURE_2D, this.context.TEXTURE_MAG_FILTER, this.context.LINEAR);
+		this.context.texParameteri(this.context.TEXTURE_2D, this.context.TEXTURE_WRAP_S, this.context.CLAMP_TO_EDGE);
+		this.context.texParameteri(this.context.TEXTURE_2D, this.context.TEXTURE_WRAP_T, this.context.CLAMP_TO_EDGE);
+		this.context.texImage2D(this.context.TEXTURE_2D, 0, this.context.RGBA, this.context.RGBA, this.context.UNSIGNED_BYTE, this.image);
 
-		function start() {
-			this.spriteSheetCreateSprite();
-			this.webglTicker();
+		this.textureUnit_ = this.currentTextureUnit_;
+		this.textureWidth_ = this.image.width;
+		this.textureHeight_ = this.image.height;
+
+		this.textures_[this.currentTextureUnit_] = texture;
+		++this.currentTextureUnit_;
+		if (this.onload) {
+			this.onload();
 		}
 	}
 	SpriteAnim.prototype.webglStop = function() {
@@ -299,27 +307,6 @@
 			}
 		}
 	};
-	SpriteAnim.prototype.spriteSheetLoaded_ = function(sheet, image, params) {
-		var texture = this.context.createTexture();
-		this.context.bindTexture(this.context.TEXTURE_2D, texture);
-		this.context.texParameteri(this.context.TEXTURE_2D, this.context.TEXTURE_MIN_FILTER, this.context.LINEAR);
-		this.context.texParameteri(this.context.TEXTURE_2D, this.context.TEXTURE_MAG_FILTER, this.context.LINEAR);
-		this.context.texParameteri(this.context.TEXTURE_2D, this.context.TEXTURE_WRAP_S, this.context.CLAMP_TO_EDGE);
-		this.context.texParameteri(this.context.TEXTURE_2D, this.context.TEXTURE_WRAP_T, this.context.CLAMP_TO_EDGE);
-		this.context.texImage2D(this.context.TEXTURE_2D, 0, this.context.RGBA, this.context.RGBA, this.context.UNSIGNED_BYTE, image);
-
-		this.textureUnit_ = this.currentTextureUnit_;
-		this.textureWidth_ = image.width;
-		this.textureHeight_ = image.height;
-
-		this.textures_[this.currentTextureUnit_] = texture;
-		++this.currentTextureUnit_;
-		if (--this.numOutstandingRequests_ == 0) {
-			if (this.onload) {
-				this.onload();
-			}
-		}
-	};
 	SpriteAnim.prototype.spriteSheetCreateSprite = function() {
 		var screenWidth = this.canvas.width;
 		var screenHeight = this.canvas.height;
@@ -345,6 +332,7 @@
 			this.sysAddVertex_(centerX, centerY,rotation,perSpriteFrameOffset,spriteSize,offsets[ii][0],offsets[ii][1],spriteTextureSizeX,
 				spriteTextureSizeY,spritesPerRow,numFrames,textureWeights);
 		}
+		this.webglTicker();
 	};
 	SpriteAnim.prototype.sysLoadShader = function(shaderSource, shaderType) {
 		var shader = this.context.createShader(shaderType);
@@ -389,18 +377,8 @@
 		this.texture2Loc_ = this.context.getUniformLocation(program, "u_texture2");
 		this.texture3Loc_ = this.context.getUniformLocation(program, "u_texture3");
 	};
-	SpriteAnim.prototype.sysResizeCapacity_ = function(capacity, preserveOldContents) {
+	SpriteAnim.prototype.sysResizeCapacity_ = function(capacity) {
 		// Capacity is actually specified in vertices.
-		var oldPositionData = null;
-		var oldConstantData = null;
-		var oldStartPositionData = null;
-		var oldSpriteSizeData = null;
-		if (preserveOldContents) {
-			oldPositionData = this.positionData_;
-			oldConstantData = this.constantData_;
-			oldStartPositionData = this.startPositionData_;
-			oldSpriteSizeData = this.spriteSizeData_;
-		}
 		this.capacity_ = capacity;
 		this.positionData_ = new Float32Array(2 * capacity);
 		this.constantData_ = new Float32Array(this.constantAttributeStride_ * capacity);
@@ -411,18 +389,6 @@
 		this.context.bufferData(this.context.ARRAY_BUFFER,
 			Float32Array.BYTES_PER_ELEMENT * (this.positionData_.length + this.constantData_.length),
 			this.context.DYNAMIC_DRAW);
-		if (preserveOldContents) {
-			this.positionData_.set(oldPositionData);
-			this.constantData_.set(oldConstantData);
-			this.context.bufferSubData(this.context.ARRAY_BUFFER, 0, this.positionData_);
-			this.context.bufferSubData(this.context.ARRAY_BUFFER, Float32Array.BYTES_PER_ELEMENT * this.positionData_.length, this.constantData_);
-			for (var ii = 0; ii < oldStartPositionData.length; ++ii) {
-				this.startPositionData_[ii] = oldStartPositionData[ii];
-			}
-			for (var ii = 0; ii < oldSpriteSizeData.length; ++ii) {
-				this.spriteSizeData_[ii] = oldSpriteSizeData[ii];
-			}
-		}
 	};
 	SpriteAnim.prototype.sysSetupConstantLoc_ = function(location, index) {
 		if (location == -1)
@@ -452,11 +418,11 @@
 		
 		// Recompute all sprites' positions. Wrap around offscreen.
 		var numVertices = this.numVertices_;
-		for (var ii = 0; ii < numVertices; ++ii) {
+		for (var i = 0; i < numVertices; ++i) {
 			var newPosX = this.startPositionData_[0] ;
 			var newPosY = this.startPositionData_[0];
 
-			var spriteSize = this.spriteSizeData_[ii];
+			var spriteSize = this.spriteSizeData_[i];
 			if (newPosX > this.canvas.width + 1.1 * spriteSize) {
 				newPosX = -spriteSize;
 			} else if (newPosX < -1.1 * spriteSize) {
@@ -467,8 +433,8 @@
 			} else if (newPosY < -1.1 * spriteSize) {
 				newPosY = this.canvas.height + spriteSize;
 			}
-			this.positionData_[2 * ii] = this.width / 2;
-			this.positionData_[2 * ii + 1] = this.width / 2;
+			this.positionData_[2 * i] = this.width / 2;
+			this.positionData_[2 * i + 1] = this.height / 2;
 
 		}
 		// Upload all sprites' positions.
