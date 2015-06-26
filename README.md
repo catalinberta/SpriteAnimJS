@@ -1,6 +1,8 @@
 # SpriteAnimJS
 Run spritesheet animations, that is all.
 
+######[Demos here](http://catalinberta.github.io/spriteanimjs/)
+
 If you have a DOM app and want to create some fast spritesheets
 in WebGL, which fall back nicely to Canvas, then this might be of help.
 Take note that this runs spritesheets standalone, each on its own canvas,
