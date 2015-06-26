@@ -8,7 +8,7 @@
 	<link href="css/main.css" rel="stylesheet" type="text/css" media="all" />
 	<script type="text/javascript" src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
 	<script type="text/javascript" src="https://code.createjs.com/preloadjs-0.6.0.min.js"></script>
-	<script type="text/javascript" src="../spriteanim-0.1.5.js"></script>
+	<script type="text/javascript" src="../spriteanim-0.1.6.js"></script>
 </head>
 <body>
 	<div class="github-fork-ribbon-wrapper right">
@@ -55,8 +55,7 @@
 		queue.loadManifest([
 			{id:"boost1", src:"spritesheets/boost1.png"},
 			{id:"running", src:"spritesheets/running.png"},
-			{id:"explosion", src:"spritesheets/explosion.png"},
-			{id:"loadbar", src:"spritesheets/loadbar.png"}
+			{id:"explosion", src:"spritesheets/explosion.png"}
 		]);
 		queue.on("complete", handleComplete, this);
 
@@ -66,9 +65,9 @@
 			running = new SpriteAnim("canvas2");
 			explosion = new SpriteAnim("canvas3",true);
 
-			// startBoost1();
+			startBoost1();
 			startRunning();
-			// startExplosion();
+			startExplosion();
 		}
 		function startBoost1() {
 			boost1.start({
@@ -82,9 +81,9 @@
 		};
 		function startRunning() {
 			running.start({
-				frameWidth: 20,
-				frameHeight: 200,
-				image: queue.getResult("loadbar"), // Image from preloader
+				frameWidth: 144,
+				frameHeight: 272,
+				image: queue.getResult("running"), // Image from preloader
 				fps: 10,
 				className: 'running_class',
 				loop: true
@@ -128,75 +127,6 @@
 			});
 		});
 	</script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-	<script id="spriteAnimVertexShader" type="x-shader/x-vertex">
-		uniform float u_frameOffset;
-		uniform vec4 u_screenDims;
-		attribute vec2 centerPosition;
-		attribute float rotation;
-		attribute float perSpriteFrameOffset;
-		attribute float spriteWidth;
-		attribute float spriteHeight;
-		attribute vec2 cornerOffset;
-		attribute vec2 spriteTextureSize;
-		attribute float spritesPerRow;
-		attribute float numFrames;
-		attribute vec4 textureWeights;
-		varying vec2 v_texCoord;
-		varying vec4 v_textureWeights;
-
-		void main() {
-		  float frameNumber = mod(u_frameOffset + perSpriteFrameOffset, numFrames);
-		  float row = floor(frameNumber / spritesPerRow);  // Compute the upper left texture coordinate of the sprite
-		  vec2 upperLeftTC = vec2(spriteTextureSize.x * (frameNumber - (row * spritesPerRow)),
-		                          spriteTextureSize.y * row);
-		  vec2 tc = upperLeftTC + spriteTextureSize * (cornerOffset + vec2(0.5, 0.5));
-		  v_texCoord = tc;
-		  v_textureWeights = textureWeights;
-		  float s = sin(rotation);
-		  float c = cos(rotation);
-		  mat2 rotMat = mat2(c, -s, s, c);
-		  // vec2 scaledOffset = spriteSize * cornerOffset;
-		  vec2 scaledOffset = vec2(20,200) * cornerOffset;
-		  vec2 pos = centerPosition + rotMat * scaledOffset;
-		  gl_Position = vec4(pos * u_screenDims.xy + u_screenDims.zw, 1.0, 1.0);
-		}
-	</script>
-	<script id="spriteAnimFragmentShader" type="x-shader/x-fragment">
-		precision mediump float;
-		uniform sampler2D u_texture0;
-		uniform sampler2D u_texture1;
-		uniform sampler2D u_texture2;
-		uniform sampler2D u_texture3;
-		varying vec2 v_texCoord;
-		varying vec4 v_textureWeights;
-		void main() {
-		  vec4 color;
-		  if (v_textureWeights.x > 0.0)
-		    color = texture2D(u_texture0, v_texCoord);
-		  else if (v_textureWeights.y > 0.0)
-		    color = texture2D(u_texture1, v_texCoord);
-		  else if (v_textureWeights.z > 0.0)
-		    color = texture2D(u_texture2, v_texCoord);
-		  else // v_textureWeights.w > 0.0
-		    color = texture2D(u_texture3, v_texCoord);
-		  gl_FragColor = color;
-		}
-
-		</script>	
-
 
 </body>
 </html>
