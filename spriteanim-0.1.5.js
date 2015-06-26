@@ -147,19 +147,20 @@
 		}
 	};
 	SpriteAnim.prototype.injectShaders = function() {
-		// Vertex Shader
-		var vertexShader   = document.createElement("script");
-		vertexShader.type  = "x-shader/x-vertex";
-		vertexShader.id = "spriteAnimVertexShader";
-		vertexShader.text  = 'uniform float u_frameOffset;uniform vec4 u_screenDims;attribute vec2 centerPosition;attribute float rotation;attribute float perSpriteFrameOffset;attribute float spriteSize;attribute vec2 cornerOffset;attribute vec2 spriteTextureSize;attribute float spritesPerRow;attribute float numFrames;attribute vec4 textureWeights;varying vec2 v_texCoord;varying vec4 v_textureWeights;		void main() {			float frameNumber = mod(u_frameOffset + perSpriteFrameOffset, numFrames);float row = floor(frameNumber / spritesPerRow); vec2 upperLeftTC = vec2(spriteTextureSize.x * (frameNumber - (row * spritesPerRow)), spriteTextureSize.y * row); vec2 tc = upperLeftTC + spriteTextureSize * (cornerOffset + vec2(0.5, 0.5)); v_texCoord = tc; v_textureWeights = textureWeights; float s = sin(rotation); float c = cos(rotation); mat2 rotMat = mat2(c, -s, s, c); vec2 scaledOffset = spriteSize * cornerOffset; vec2 pos = centerPosition + rotMat * scaledOffset; gl_Position = vec4(pos * u_screenDims.xy + u_screenDims.zw, 0.0, 1.0);		}'               // use this for inline script
-		document.body.appendChild(vertexShader);
+		// // Vertex Shader
+		// var vertexShader   = document.createElement("script");
+		// vertexShader.type  = "x-shader/x-vertex";
+		// vertexShader.id = "spriteAnimVertexShader";
+		// //vertexShader.text  = 'uniform float u_frameOffset;uniform vec4 u_screenDims;attribute vec2 centerPosition;attribute float rotation;attribute float perSpriteFrameOffset;attribute float spriteWidth;attribute vec2 cornerOffset;attribute vec2 spriteTextureSize;attribute float spritesPerRow;attribute float numFrames;attribute vec4 textureWeights;varying vec2 v_texCoord;varying vec4 v_textureWeights;		void main() {			float frameNumber = mod(u_frameOffset + perSpriteFrameOffset, numFrames);float row = floor(frameNumber / spritesPerRow); vec2 upperLeftTC = vec2(spriteTextureSize.x * (frameNumber - (row * spritesPerRow)), spriteTextureSize.y * row); vec2 tc = upperLeftTC + spriteTextureSize * (cornerOffset + vec2(0.5, 0.5)); v_texCoord = tc; v_textureWeights = textureWeights; float s = sin(rotation); float c = cos(rotation); mat2 rotMat = mat2(c, -s, s, c); vec2 scaledOffset = spriteWidth * cornerOffset; vec2 pos = centerPosition + rotMat * scaledOffset; gl_Position = vec4(pos * u_screenDims.xy + u_screenDims.zw, 0.0, 1.0);		}'               // use this for inline script
+		// vertexShader.text  = 'uniform float u_frameOffset;uniform vec4 u_screenDims;attribute vec2 centerPosition;attribute float rotation;attribute float perSpriteFrameOffset;attribute float spriteWidth;attribute vec2 cornerOffset;attribute vec2 spriteTextureSize;attribute float spritesPerRow;attribute float numFrames;attribute vec4 textureWeights;varying vec2 v_texCoord;varying vec4 v_textureWeights;		void main() {			float frameNumber = mod(u_frameOffset + perSpriteFrameOffset, numFrames);float row = floor(frameNumber / spritesPerRow); vec2 upperLeftTC = vec2(spriteTextureSize.x * (frameNumber - (row * spritesPerRow)), spriteTextureSize.y * row); vec2 tc = upperLeftTC + spriteTextureSize * (cornerOffset + vec2(0.5, 0.5)); v_texCoord = tc; v_textureWeights = textureWeights; float s = sin(rotation); float c = cos(rotation); mat2 rotMat = mat2(c, -s, s, c); vec2 scaledOffset = spriteWidth * cornerOffset; vec2 pos = centerPosition + rotMat * scaledOffset; gl_Position = vec4(pos * u_screenDims.xy + u_screenDims.zw, 0.0, 1.0);		}'               // use this for inline script
+		// document.body.appendChild(vertexShader);
 
-		// Fragment Shader
-		var fragmentShader   = document.createElement("script");
-		fragmentShader.type  = "x-shader/x-fragment";
-		fragmentShader.id = "spriteAnimFragmentShader";
-		fragmentShader.text  = "precision mediump float;uniform sampler2D u_texture0;uniform sampler2D u_texture1;uniform sampler2D u_texture2;uniform sampler2D u_texture3;		varying vec2 v_texCoord;varying vec4 v_textureWeights;		void main() {			vec4 color; if (v_textureWeights.x > 0.0) color = texture2D(u_texture0, v_texCoord); else if (v_textureWeights.y > 0.0) color = texture2D(u_texture1, v_texCoord); else if (v_textureWeights.z > 0.0) color = texture2D(u_texture2, v_texCoord); else color = texture2D(u_texture3, v_texCoord); gl_FragColor = color; }"
-		document.body.appendChild(fragmentShader);
+		// // Fragment Shader
+		// var fragmentShader   = document.createElement("script");
+		// fragmentShader.type  = "x-shader/x-fragment";
+		// fragmentShader.id = "spriteAnimFragmentShader";
+		// fragmentShader.text  = "precision mediump float;uniform sampler2D u_texture0;uniform sampler2D u_texture1;uniform sampler2D u_texture2;uniform sampler2D u_texture3;		varying vec2 v_texCoord;varying vec4 v_textureWeights;		void main() {			vec4 color; if (v_textureWeights.x > 0.0) color = texture2D(u_texture0, v_texCoord); else if (v_textureWeights.y > 0.0) color = texture2D(u_texture1, v_texCoord); else if (v_textureWeights.z > 0.0) color = texture2D(u_texture2, v_texCoord); else color = texture2D(u_texture3, v_texCoord); gl_FragColor = color; }"
+		// document.body.appendChild(fragmentShader);
 	}
 	SpriteAnim.prototype.webglStart = function(spriteObj) {
 		var that = this;
@@ -201,7 +202,8 @@
 
 		this.ROTATION_INDEX = 0;
 		this.PER_SPRITE_FRAME_OFFSET_INDEX = 1;
-		this.SPRITE_SIZE_INDEX = 2;
+		this.SPRITE_HEIGHT_INDEX = 3;
+		this.SPRITE_WIDTH_INDEX = 2;
 		this.CORNER_OFFSET_INDEX = 3;
 		this.SPRITE_TEXTURE_SIZE_INDEX = 4;
 		this.SPRITES_PER_ROW_INDEX = 5;
@@ -224,8 +226,8 @@
 		];
 
 		this.initialized_ = false;
-		this.screenWidth_ = this.totalWidth;
-		this.screenHeight_ = this.totalHeight;
+		this.screenWidth_ = this.width;
+		this.screenHeight_ = this.height;
 
 		this.onload = this.spriteSheetCreateSprite;
 		//addSpriteSheet
@@ -320,16 +322,16 @@
 			this.perSpriteFrameOffset_ = 0;
 		}
 		// Generalize the sprite size to vec2 if sprites are non-square.
-		var spriteSize = this.params_.width;
+		var spriteHeight = this.params_.height;
+		var spriteWidth = this.params_.width;
 		var spriteTextureSizeX = (1.0 * this.params_.width) / this.textureWidth_;
 		var spriteTextureSizeY = (1.0 * this.params_.height) / this.textureHeight_;
 		var spritesPerRow = this.params_.spritesPerRow;
 		var numFrames = this.params_.frames;
 		var textureWeights = [ 0.0, 0.0, 0.0, 0.0 ];
 		textureWeights[this.textureUnit_] = 1.0;
-		var offsets = this.offsets_;
-		for (var ii = 0; ii < offsets.length; ++ii) {
-			this.sysAddVertex_(centerX, centerY,rotation,perSpriteFrameOffset,spriteSize,offsets[ii][0],offsets[ii][1],spriteTextureSizeX,
+		for (var ii = 0; ii < this.offsets_.length; ++ii) {
+			this.sysAddVertex_(centerX, centerY,rotation,perSpriteFrameOffset,spriteHeight,spriteWidth,this.offsets_[ii][0],this.offsets_[ii][1],spriteTextureSizeX,
 				spriteTextureSizeY,spritesPerRow,numFrames,textureWeights);
 		}
 		this.webglTicker();
@@ -350,6 +352,7 @@
 		this.precisePositionView_ = null;
 	};
 	SpriteAnim.prototype.sysLoadProgram_ = function(options) {
+
 		var fragmentShaderName = 'spriteAnimFragmentShader';
 		var vertexShader = this.sysLoadShader(document.getElementById('spriteAnimVertexShader').text, this.context.VERTEX_SHADER);
 		var fragmentShader = this.sysLoadShader(document.getElementById(fragmentShaderName).text, this.context.FRAGMENT_SHADER);
@@ -366,7 +369,8 @@
 		this.centerPositionLoc_ = this.context.getAttribLocation(program, "centerPosition");
 		this.rotationLoc_ = this.context.getAttribLocation(program, "rotation");
 		this.perSpriteFrameOffsetLoc_ = this.context.getAttribLocation(program, "perSpriteFrameOffset");
-		this.spriteSizeLoc_ = this.context.getAttribLocation(program, "spriteSize");
+		this.spriteHeightLoc_ = this.context.getAttribLocation(program, "spriteHeight");
+		this.spriteWidthLoc_ = this.context.getAttribLocation(program, "spriteWidth");
 		this.cornerOffsetLoc_ = this.context.getAttribLocation(program, "cornerOffset");
 		this.spriteTextureSizeLoc_ = this.context.getAttribLocation(program, "spriteTextureSize");
 		this.spritesPerRowLoc_ = this.context.getAttribLocation(program, "spritesPerRow");
@@ -383,7 +387,8 @@
 		this.positionData_ = new Float32Array(2 * capacity);
 		this.constantData_ = new Float32Array(this.constantAttributeStride_ * capacity);
 		this.startPositionData_ = new Array(2 * capacity);
-		this.spriteSizeData_ = new Array(capacity);
+		this.spriteHeightData_ = new Array(capacity);
+		this.spriteWidthData_ = new Array(capacity);
 
 		this.context.bindBuffer(this.context.ARRAY_BUFFER, this.spriteBuffer_);
 		this.context.bufferData(this.context.ARRAY_BUFFER,
@@ -419,28 +424,13 @@
 		// Recompute all sprites' positions. Wrap around offscreen.
 		var numVertices = this.numVertices_;
 		for (var i = 0; i < numVertices; ++i) {
-			var newPosX = this.startPositionData_[0] ;
-			var newPosY = this.startPositionData_[0];
-
-			var spriteSize = this.spriteSizeData_[i];
-			if (newPosX > this.canvas.width + 1.1 * spriteSize) {
-				newPosX = -spriteSize;
-			} else if (newPosX < -1.1 * spriteSize) {
-				newPosX = this.canvas.width + spriteSize;
-			}
-			if (newPosY > this.canvas.height + 1.1 * spriteSize) {
-				newPosY = -spriteSize;
-			} else if (newPosY < -1.1 * spriteSize) {
-				newPosY = this.canvas.height + spriteSize;
-			}
 			this.positionData_[2 * i] = this.width / 2;
 			this.positionData_[2 * i + 1] = this.height / 2;
-
 		}
 		// Upload all sprites' positions.
 		this.context.bindBuffer(this.context.ARRAY_BUFFER, this.spriteBuffer_);
 		if (!this.precisePositionView_ || this.precisePositionView_.length != 2 * numVertices) {
-			this.precisePositionView_ = this.positionData_.subarray(0, 2 * numVertices);
+			this.precisePositionView_ =  this.positionData_.subarray(0, 2 * numVertices);
 		}
 		this.context.bufferSubData(this.context.ARRAY_BUFFER, 0, this.precisePositionView_);
 		// Bind all textures.
@@ -455,12 +445,14 @@
 		this.context.vertexAttribPointer(this.centerPositionLoc_, 2, this.context.FLOAT, false, 0, 0);
 		this.sysSetupConstantLoc_(this.rotationLoc_, this.ROTATION_INDEX);
 		this.sysSetupConstantLoc_(this.perSpriteFrameOffsetLoc_, this.PER_SPRITE_FRAME_OFFSET_INDEX);
-		this.sysSetupConstantLoc_(this.spriteSizeLoc_, this.SPRITE_SIZE_INDEX);
+		this.sysSetupConstantLoc_(this.spriteHeightLoc_, this.SPRITE_HEIGHT_INDEX);
+		this.sysSetupConstantLoc_(this.spriteWidthLoc_, this.SPRITE_WIDTH_INDEX);
 		this.sysSetupConstantLoc_(this.cornerOffsetLoc_, this.CORNER_OFFSET_INDEX);
 		this.sysSetupConstantLoc_(this.spriteTextureSizeLoc_, this.SPRITE_TEXTURE_SIZE_INDEX);
 		this.sysSetupConstantLoc_(this.spritesPerRowLoc_, this.SPRITES_PER_ROW_INDEX);
 		this.sysSetupConstantLoc_(this.numFramesLoc_, this.NUM_FRAMES_INDEX);
 		this.sysSetupConstantLoc_(this.textureWeightsLoc_, this.TEXTURE_WEIGHTS_INDEX);
+
 		// Set up uniforms.
 		this.context.uniform1f(this.frameOffsetLoc_, this.frameOffset_++);
 		this.context.uniform4f(this.screenDimsLoc_,
@@ -475,24 +467,25 @@
 		// Do the draw call.
 		this.context.drawArrays(this.context.TRIANGLES, 0, this.numVertices_);
 	};
-	SpriteAnim.prototype.sysAddVertex_ = function(centerX, centerY,rotation,perSpriteFrameOffset,spriteSize,cornerOffsetX, cornerOffsetY,
+	SpriteAnim.prototype.sysAddVertex_ = function(centerX, centerY,rotation,perSpriteFrameOffset,spriteHeight,spriteWidth,cornerOffsetX, cornerOffsetY,
 		spriteTextureSizeX,spriteTextureSizeY,spritesPerRow,numFrames,textureWeights) {
 		if (this.numVertices_ == this.capacity_) {
 			this.sysResizeCapacity_(this.capacity_ * 2, true);
 		}
 		var vertexIndex = this.numVertices_;
 		++this.numVertices_;
-		this.positionData_[2 * vertexIndex    ] = centerX;
-		this.positionData_[2 * vertexIndex + 1] = centerY;
-		this.startPositionData_[2 * vertexIndex    ] = centerX;
-		this.startPositionData_[2 * vertexIndex + 1] = centerY;
-		this.spriteSizeData_[vertexIndex] = spriteSize;
+		// this.positionData_[2 * vertexIndex    ] = centerX;
+		// this.positionData_[2 * vertexIndex + 1] = centerY;
+		// this.startPositionData_[2 * vertexIndex    ] = centerX;
+		// this.startPositionData_[2 * vertexIndex + 1] = centerY;
+		//this.spriteWidthData_[vertexIndex] = spriteWidth;
 
 		// Base index into the constant data
 		var baseIndex = this.constantAttributeStride_ * vertexIndex;
 		this.constantData_[baseIndex + this.constantAttributeInfo_[this.ROTATION_INDEX].offset] = rotation;
 		this.constantData_[baseIndex + this.constantAttributeInfo_[this.PER_SPRITE_FRAME_OFFSET_INDEX].offset] = perSpriteFrameOffset;
-		this.constantData_[baseIndex + this.constantAttributeInfo_[this.SPRITE_SIZE_INDEX].offset] = spriteSize;
+		this.constantData_[baseIndex + this.constantAttributeInfo_[this.SPRITE_HEIGHT_INDEX].offset] = spriteHeight;
+		this.constantData_[baseIndex + this.constantAttributeInfo_[this.SPRITE_WIDTH_INDEX].offset] = spriteWidth;
 		this.constantData_[baseIndex + this.constantAttributeInfo_[this.CORNER_OFFSET_INDEX].offset] = cornerOffsetX;
 		this.constantData_[baseIndex + this.constantAttributeInfo_[this.CORNER_OFFSET_INDEX].offset + 1] = cornerOffsetY;
 		this.constantData_[baseIndex + this.constantAttributeInfo_[this.SPRITE_TEXTURE_SIZE_INDEX].offset] = spriteTextureSizeX;
