@@ -51,6 +51,7 @@ a, a:hover{
 }
 #wrapper{
 	background: #DC572E;
+	margin-bottom: 100px;
 }
 #main{
 	overflow: hidden;
@@ -71,10 +72,10 @@ a, a:hover{
 	position: relative;
 	width: 320px;
 }
-#main .col1 {
+#main .col.col1 {
 	margin-left: 10px;
 }
-#main .col3 {
+#main .col.col3 {
 	margin-right: 10px;
 }
 #main .btn {
@@ -127,4 +128,39 @@ a, a:hover{
 }
 #main .btn.btn_right {
 	right: 10px;
+}
+#main .code {
+	float: left;
+	margin: 25px 5px 0;
+	position: relative;
+	text-align: left;
+	position: relative;
+	width: 320px;
+}
+#main .code.col1 {
+	margin-left: 10px;
+}
+#main .code.col3 {
+	margin-right: 10px;
+}
+#main .code .code_toggle {
+	color: #fde180;
+	display: block;
+	font: normal normal 12px "Trebuchet MS", Arial;
+	position: absolute;
+	top: -20px;
+	text-align: center;
+	width: 100%;
+}
+#main .code .code_toggle:hover {
+	color: #fbeebf;
+}
+#main .code .code_wrapper {
+	display: none;
+}
+#main .code .section_title {
+	color: #4f1a0a;
+	display: block;
+	font: normal bold 16px "Trebuchet MS", Arial;
+	text-transform: uppercase;
 }

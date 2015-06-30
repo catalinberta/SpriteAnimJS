@@ -6,20 +6,22 @@
 	<link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700,900" rel="stylesheet" />
 	<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.1.1/gh-fork-ribbon.min.css" />
 	<link href="css/main.css" rel="stylesheet" type="text/css" media="all" />
+	<link type="text/css" rel="stylesheet" href="css/shCoreEmacs.css"/>
+	<script type="text/javascript" src="js/shCore.js"></script>
 	<script type="text/javascript" src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
 	<script type="text/javascript" src="https://code.createjs.com/preloadjs-0.6.0.min.js"></script>
-	<script type="text/javascript" src="../spriteanim-0.1.6.js"></script>
+	<script type="text/javascript" src="../spriteanim-0.1.7.js"></script>
 </head>
 <body>
 	<div class="github-fork-ribbon-wrapper right">
-	    <div class="github-fork-ribbon" style="background-color: #DC572E;">
-	        <a href="https://github.com/catalinberta/SpriteAnimJS">Fork me on GitHub</a>
-	    </div>
+		<div class="github-fork-ribbon" style="background-color: #DC572E;">
+			<a href="https://github.com/catalinberta/SpriteAnimJS">Fork me on GitHub</a>
+		</div>
 	</div>
 	<div id="header-wrapper">
 		<div id="header" class="container">
 			<div id="logo">
-				<h1><a href="#">SpriteAnimJS</a></h1>
+				<h1><a href="https://github.com/catalinberta/SpriteAnimJS">SpriteAnimJS</a></h1>
 				<span>Play spritesheet animations. That is all.</span>
 			</div>
 		</div>
@@ -46,6 +48,75 @@
 				<span class="fps">FPS: <span>40</span></span>
 				<a class="btn btn_left canvas3" href="javascript:;">Play</a>
 				<a class="btn btn_right canvas3" href="javascript:;">Stop</a>
+			</div>
+			<div class="code col1">
+				<a class="code_toggle" href="javascript:;">[show code]</a>
+				<div class="code_wrapper">
+					<span class="section_title">HTML</span>
+					<pre class="brush: js">
+						<canvas id="canvas1"></canvas></pre>
+					
+					<span class="section_title">JS</span>
+					<pre class="brush: js">
+						var boost1 = new SpriteAnim("canvas1");
+
+						boost1.start({
+							frameWidth: 350,
+							frameHeight: 350,
+							image: queue.getResult("boost1"), // Image from preloader
+							fps: 50,
+							className: 'boost_class',
+							loop: true
+						});</pre>
+				</div>
+			</div>
+			<div class="code col2">
+				<a class="code_toggle" href="javascript:;">[show code]</a>
+				<div class="code_wrapper">
+					<span class="section_title">HTML</span>
+					<pre class="brush: js">
+						<canvas id="canvas2"></canvas></pre>
+					
+					<span class="section_title">JS</span>
+					<pre class="brush: js">
+						var running = new SpriteAnim("canvas2");
+
+						running.start({
+							frameWidth: 144,
+							frameHeight: 272,
+							image: queue.getResult("running"), // Image from preloader
+							fps: 10,
+							className: 'running_class',
+							loop: true
+						}); </pre>
+				</div>
+			</div>
+			<div class="code col3">
+				<a class="code_toggle" href="javascript:;">[show code]</a>
+				<div class="code_wrapper">
+					<span class="section_title">HTML</span>
+					<pre class="brush: js">
+						<canvas id="canvas3"></canvas></pre>
+					
+					<span class="section_title">JS</span>
+					<pre class="brush: js">
+						var explosion = new SpriteAnim("canvas3",true);
+
+						explosion.start({
+							frameWidth: 256,
+							frameHeight: 256,
+							image: queue.getResult("explosion"), // Image from preloader
+							fps: 40,
+							className: 'explosion_class',
+							onStart: function() {
+							  console.log('onStart explosion callback')
+							},
+							onComplete: function() {
+							  console.log('onComplete explosion callback')
+							},
+							loop: true
+						}); </pre>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -126,6 +197,17 @@
 				explosion.stop();
 			});
 		});
+
+		SyntaxHighlighter.all();
+
+		$('.code_toggle').click(function() {
+			var code = $(this).parent().find('.code_wrapper');
+			if(code.css('display') == 'none') {
+				code.css('display','block');
+			} else {
+				code.css('display','none');
+			}
+ 		})
 	</script>
 
 </body>

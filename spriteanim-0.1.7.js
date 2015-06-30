@@ -1,9 +1,9 @@
 /*******************************************************************************************
-* SpriteAnim v0.1.6 (beta)
+* SpriteAnim v0.1.7 (beta)
 * Author: Catalin Berta
 * E-mail: catalinberta (at) gmail (dot) com
-* Official page and documentation: https://github.com/catalinberta/SpriteAnimJS
-* I've gotten most of the awesome webgl support from: http://webglsamples.org - check it out
+* Documentation: https://github.com/catalinberta/SpriteAnimJS
+* Most of the awesome webgl support is from: http://webglsamples.org
 *******************************************************************************************/
 (function(window) {
 	"use strict";
@@ -41,7 +41,6 @@
 				this.canvas.className = spriteObj.className; // Add new specified class(es) 
 			}
 		}
-
 		// Sprite Info
 		this.width = this.spriteObj.frameWidth; // Set canvas width
 		this.height = this.spriteObj.frameHeight; // Set canvas width
@@ -51,34 +50,28 @@
 
 		this.canvas.width = this.width; // Set canvas width
 		this.canvas.height = this.height; // Set canvas width
-
 		// Frame stuff
 		this.horizontalframeIndex = 0; // Frame index
 		this.verticalFrameIndex = 0;
 		this.horizontalFrames = (this.totalWidth / spriteObj.frameWidth) || 1; // Horizontal frames
 		this.verticalFrames = (this.totalHeight / spriteObj.frameHeight) || 1; // Vertical frames
-
 		// FPS stuff
 		this.fps = this.spriteObj.fps || 30;
 		this.timestamp_init = Date.now(); // Before execution of ticker
 		this.interval = 1000 / this.fps; // Frame's interval in ms 
 		this.timestamp_now, this.delta; // Vars
-		
 		this.loopSprite = this.spriteObj.loop || false; // If should loop boolean
 		this.playSprite = true; // Play state boolean
-
 		// If support for WebGL is enabled, jump to webgl section
 		if(!this.useCanvas) {
 			this.webglStart(spriteObj);
 			return;
 		}
-
 		this.canvasTicker(); // Start ticker
 	}
 	// Stop method
 	SpriteAnim.prototype.stop = function() {
 		this.playSprite = false;
-
 		// If support for WebGL is enabled, jump to webgl section
 		if(this.webgl_support(this.canvas)) {
 			this.webglStop();
@@ -153,7 +146,6 @@
 		vertexShader.id = "spriteAnimVertexShader";
 		vertexShader.text = 'uniform float u_frameOffset; uniform vec4 u_screenDims; attribute vec2 centerPosition; attribute float perSpriteFrameOffset; attribute float spriteWidth; attribute float spriteHeight; attribute vec2 cornerOffset; attribute vec2 spriteTextureSize; attribute float spritesPerRow; attribute float numFrames; attribute vec4 textureWeights; varying vec2 v_texCoord; varying vec4 v_textureWeights;  void main() { float frameNumber = mod(u_frameOffset + perSpriteFrameOffset, numFrames); float row = floor(frameNumber / spritesPerRow);  vec2 upperLeftTC = vec2(spriteTextureSize.x * (frameNumber - (row * spritesPerRow)), spriteTextureSize.y * row);vec2 tc = upperLeftTC + spriteTextureSize * (cornerOffset + vec2(0.5, 0.5));v_texCoord = tc; v_textureWeights = textureWeights; vec2 scaledOffset = vec2(spriteWidth,spriteHeight) * cornerOffset; vec2 pos = centerPosition + 1.0 * scaledOffset; gl_Position = vec4(pos * u_screenDims.xy + u_screenDims.zw, 1.0, 1.0); }';
 		document.body.appendChild(vertexShader);
-
 		// Fragment Shader
 		var fragmentShader   = document.createElement("script");
 		fragmentShader.type  = "x-shader/x-fragment";
@@ -245,7 +237,6 @@
 		this.textureUnit_ = this.currentTextureUnit_;
 		this.textureWidth_ = this.image.width;
 		this.textureHeight_ = this.image.height;
-
 		this.textures_[this.currentTextureUnit_] = texture;
 		++this.currentTextureUnit_;
 		if (this.onload) {
@@ -348,7 +339,6 @@
 		this.precisePositionView_ = null;
 	};
 	SpriteAnim.prototype.sysLoadProgram_ = function(options) {
-
 		var fragmentShaderName = 'spriteAnimFragmentShader';
 		var vertexShader = this.sysLoadShader(document.getElementById('spriteAnimVertexShader').text, this.context.VERTEX_SHADER);
 		var fragmentShader = this.sysLoadShader(document.getElementById(fragmentShaderName).text, this.context.FRAGMENT_SHADER);
@@ -384,7 +374,6 @@
 		this.startPositionData_ = new Array(2 * capacity);
 		this.spriteHeightData_ = new Array(capacity);
 		this.spriteWidthData_ = new Array(capacity);
-
 		this.context.bindBuffer(this.context.ARRAY_BUFFER, this.spriteBuffer_);
 		this.context.bufferData(this.context.ARRAY_BUFFER,
 			Float32Array.BYTES_PER_ELEMENT * (this.positionData_.length + this.constantData_.length),
@@ -446,7 +435,6 @@
 		this.sysSetupConstantLoc_(this.spritesPerRowLoc_, this.SPRITES_PER_ROW_INDEX);
 		this.sysSetupConstantLoc_(this.numFramesLoc_, this.NUM_FRAMES_INDEX);
 		this.sysSetupConstantLoc_(this.textureWeightsLoc_, this.TEXTURE_WEIGHTS_INDEX);
-
 		// Set up uniforms.
 		this.context.uniform1f(this.frameOffsetLoc_, this.frameOffset_++);
 		this.context.uniform4f(this.screenDimsLoc_,
@@ -468,12 +456,6 @@
 		}
 		var vertexIndex = this.numVertices_;
 		++this.numVertices_;
-		// this.positionData_[2 * vertexIndex    ] = centerX;
-		// this.positionData_[2 * vertexIndex + 1] = centerY;
-		// this.startPositionData_[2 * vertexIndex    ] = centerX;
-		// this.startPositionData_[2 * vertexIndex + 1] = centerY;
-		//this.spriteWidthData_[vertexIndex] = spriteWidth;
-
 		// Base index into the constant data
 		var baseIndex = this.constantAttributeStride_ * vertexIndex;
 		this.constantData_[baseIndex + this.constantAttributeInfo_[this.SPRITE_HEIGHT_INDEX].offset] = spriteHeight;
@@ -489,9 +471,7 @@
 		this.constantData_[baseIndex + this.constantAttributeInfo_[this.TEXTURE_WEIGHTS_INDEX].offset + 1] = textureWeights[1];
 		this.constantData_[baseIndex + this.constantAttributeInfo_[this.TEXTURE_WEIGHTS_INDEX].offset + 2] = textureWeights[2];
 		this.constantData_[baseIndex + this.constantAttributeInfo_[this.TEXTURE_WEIGHTS_INDEX].offset + 3] = textureWeights[3];
-
-		// Upload the changes to the constant data immediately, since we
-		// won't touch it again.
+		// Upload the changes
 		this.context.bindBuffer(this.context.ARRAY_BUFFER, this.spriteBuffer_);
 		this.context.bufferSubData(this.context.ARRAY_BUFFER,
 			Float32Array.BYTES_PER_ELEMENT * (this.positionData_.length + baseIndex),
