@@ -1,13 +1,11 @@
 # SpriteAnimJS
-Run spritesheet animations, that is all.
+Run spritesheet animations in webGL, that is all.
 
 ######[Demos here](http://catalinberta.github.io/spriteanimjs/)
 
 If you have a DOM app and want to create some fast spritesheets
 in WebGL, which fall back nicely to Canvas, then this might be of help.
-Take note that this runs spritesheets standalone, each on its own canvas,
-Basically, all you have to do is create a canvas element and run any 
-spritesheet animation on it.
+Take note that this runs spritesheets standalone, each on its own canvas.
 
 ##### Note
 Chrome limits WebGL context instances to 16, so you can run only 16 
@@ -34,7 +32,7 @@ mySpriteAnimation.start({
 
 				frameWidth: 100,
 				frameHeight: 100,
-				image: image_element, // should be preloaded
+				image: image_element, // must be preloaded
 				fps: 10,
 				className: 'class_name',
 				loop: true,
@@ -46,7 +44,7 @@ mySpriteAnimation.start({
 
 @Prop2: {integer} - Single frame height
 
-@Prop3: {element} - Image element of spritesheet, preferrably preloaded
+@Prop3: {element} - Image element of spritesheet, must be preloaded
 
 @Prop4: {integer} - Number of frames per second to run the spritesheet, defaults to 30
 
@@ -69,7 +67,7 @@ i.e. `mySpriteAnimation.stop()`
 
 #Preloading
 
-It's recommended that you preload all of the spritesheets that you are planning to use.
+You must preload all of the spritesheets that you are going to use.
 
 --
 
